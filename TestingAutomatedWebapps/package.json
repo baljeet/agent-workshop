@@ -1,0 +1,17 @@
+{
+  "name": "sales-solution-composer",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "postinstall": "npm run build --workspace @app/shared",
+    "dev": "npm run dev:api",
+    "dev:web": "npm run build --workspace @app/shared && npm run dev --workspace @app/web",
+    "dev:api": "npm run build --workspace @app/shared && npm run dev --workspace @app/api",
+    "build": "npm run build --workspace @app/shared && npm run build --workspace @app/api && npm run build --workspace @app/web",
+    "test": "npm run test --workspace @app/api"
+  }
+}
