@@ -114,6 +114,7 @@ USAGE:
     pi-workshop <command> [options]
 
 COMMANDS:
+    init [agent]             Initialize workshop instructions in current project
     start [project-name]     Start an interactive workshop session
     render <phase>            Render a prompt with variable substitution
     charter                   Print the workshop charter
@@ -125,26 +126,17 @@ COMMANDS:
     help                      Show this help
 
 EXAMPLES:
-    # Start a workshop for a new project
-    pi-workshop start "real-time todo app"
+    # Initialize for your coding agent
+    pi-workshop init                    # auto-detect agent
+    pi-workshop init claude             # Claude Code
+    pi-workshop init cursor             # Cursor
+    pi-workshop init pi                 # Pi
 
-    # Render a phase prompt with variables (for agents)
-    pi-workshop render p1 PROJECT_NAME="My App" USER_INTENT_TEXT="build a todo app"
+    # Then in your project, just say: "run a workshop for building X"
 
-    # Render from JSON variables file
-    pi-workshop render p4 --vars vars.json
-
-    # Get the manifest for programmatic use
-    pi-workshop manifest
-
-    # Copy Phase 4 prompt to clipboard
-    pi-workshop copy p4
-
-    # Validate your design doc
-    pi-workshop validate my-design.md
-
-    # Serve prompts at http://localhost:8080
-    pi-workshop serve 8080
+    # Human-driven render/validate
+    pi-workshop render p1 PROJECT_NAME="My App"
+    pi-workshop validate design.md
 
 PHASES (for prompt/copy):
     charter           — Workshop charter (send to all agents)
@@ -552,7 +544,10 @@ main() {
     fi
     
     case "$cmd" in
-        start|run|init)
+        init|i|setup)
+            bash "$SCRIPT_DIR/pi-workshop-init" "$@"
+            ;;
+        start|run)
             cmd_start "$@"
             ;;
         prompt|p)

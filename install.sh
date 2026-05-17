@@ -9,7 +9,7 @@ set -euo pipefail
 REPO_URL="https://github.com/baljeet/pi-multi-agent-design-workshop"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.pi-workshop}"
 BIN_DIR="${BIN_DIR:-$HOME/.local/bin}"
-VERSION="1.1.0"
+VERSION="1.3.0"
 
 # Colors
 RED='\033[0;31m'
@@ -84,9 +84,12 @@ fi
 # Ensure bin directory exists
 mkdir -p "$BIN_DIR"
 
-# Create symlink
+# Create symlinks
 ln -sf "$INSTALL_DIR/bin/pi-workshop" "$BIN_DIR/pi-workshop"
 success "Linked pi-workshop → $BIN_DIR/pi-workshop"
+
+ln -sf "$INSTALL_DIR/bin/pi-workshop-init" "$BIN_DIR/pi-workshop-init"
+success "Linked pi-workshop-init → $BIN_DIR/pi-workshop-init"
 
 # Check PATH
 if ! in_path "$BIN_DIR"; then
@@ -116,10 +119,16 @@ if command -v pi-workshop &>/dev/null; then
     echo ""
     echo -e "${BOLD}Quick Start:${NC}"
     echo ""
-    echo "   pi-workshop start \"my new project\""
-    echo "   pi-workshop prompt p1            # render Phase 1 prompt"
-    echo "   pi-workshop copy p4              # copy Phase 4 to clipboard"
+    echo "   # Initialize workshop in your project"
+    echo "   cd your-project"
+    echo "   pi-workshop init claude    # or: cursor, pi, generic"
+    echo ""
+    echo "   # Then say: 'run a workshop for building X'"
+    echo ""
+    echo "   # Or inspect prompts manually:"
+    echo "   pi-workshop prompt p1            # render Phase 1"
     echo "   pi-workshop validate design.md   # check design doc"
+    echo "   pi-workshop manifest             # dump JSON metadata"
     echo ""
 else
     warn "pi-workshop installed but not found in PATH."
