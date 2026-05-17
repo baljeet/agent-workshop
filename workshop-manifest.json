@@ -14,7 +14,7 @@
       "output_artifact": "P1 Problem Statement",
       "prompt": "docs/prompts/phase-1-problem-framing.md",
       "prompt_source": "file",
-      "variables": ["PROJECT_NAME", "USER_INTENT_TEXT", "ASSIGNED_ROLE", "PROJECT_FILES_OR_NOTES"]
+      "variables": ["PROJECT_NAME", "PROJECT_SCAN", "USER_INTENT_TEXT", "ASSIGNED_ROLE", "PROJECT_FILES_OR_NOTES"]
     },
     {
       "id": "p2",
@@ -205,6 +205,12 @@
       "8. Consensus Record (agent sign-offs or documented dissent)",
       "9. Workshop Metadata"
     ],
+    "optional_task_list": {
+      "trigger": "User asks for implementation tasks",
+      "path": "docs/plans/YYYY-MM-DD-[slug]-tasks.md",
+      "content": "Bite-sized tasks in dependency order with exact file paths, test-first steps, commit points (writing-plans style)",
+      "sources": ["P4 architecture", "P5 component design"]
+    },
     "checkpoints": [
       {
         "id": "requirements",

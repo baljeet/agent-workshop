@@ -176,6 +176,7 @@ When rendering prompts, substitute these variable patterns:
 
 | Variable | Source |
 |----------|--------|
+| `{{PROJECT_SCAN}}` | Summary of existing codebase: directory structure, manifests, docs, recent commits |
 | `{{PROJECT_NAME}}` | User's project name or description |
 | `{{USER_INTENT_TEXT}}` | The user's original request |
 | `{{ASSIGNED_ROLE}}` | Current role being played (from manifest) |

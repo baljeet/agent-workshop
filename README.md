@@ -60,10 +60,11 @@ Your job: **Provide intent. Review the results once. Answer collected questions.
 The AI reads `workshop-manifest.json`, discovers the phases, roles, and checkpoints, then executes:
 
 ```
-P1 → P2 → save requirements checkpoint → P3 → P4 → save HLD checkpoint
+[Scan project] → P1 → P2 → save requirements checkpoint → P3 → P4 → save HLD checkpoint
 → P5 → save LLD checkpoint → P6 → save error handling checkpoint
 → P7 → save test strategy checkpoint → P8 → REVIEW agents
 → save security review checkpoint → present everything to user ONCE
+→ [optional: generate task list if user asks]
 ```
 
 Every role response must include a critique and a safety signal:
@@ -260,6 +261,37 @@ agent-workshop serve 8080          # browse all resources via HTTP
 | No test strategy | QA Lead defines pyramid in P7 → test-strategy.md |
 | Design doc is vague hand-waving | Standardized 9-section doc + 6 reviewable artifacts |
 | You copy-paste prompts and approve every phase | AI reads manifest, executes autonomously, presents once |
+
+---
+
+## Integration with Superpowers
+
+Agent Workshop fits into the [Superpowers](https://github.com/baljeet/superpowers) workflow as the **design phase**:
+
+```
+brainstorming (explore what to build interactively)
+    ↓
+Agent Workshop (autonomous multi-agent design + review + 6 artifacts)
+    ↓
+writing-plans (bite-sized implementation tasks from the design)
+    ↓
+executing-plans / subagent-driven (implement task-by-task with TDD)
+    ↓
+requesting-code-review (verify implementation against design doc)
+    ↓
+verification-before-completion (confirm P1 success criteria are met)
+```
+
+| Superpowers Skill | How Workshop Connects |
+|-------------------|----------------------|
+| **brainstorming** | Use before Workshop for interactive exploration. Workshop picks up where brainstorming's design doc leaves off. |
+| **writing-plans** | Workshop's optional task generation (Step 7b) feeds directly into writing-plans with exact file paths from P4/P5. |
+| **executing-plans** | The task list from writing-plans drives implementation of Workshop's design. |
+| **TDD** | P7's test strategy + sample test cases feed into the test-first cycle. |
+| **requesting-code-review** | Review implementation against Workshop's design doc and checkpoint artifacts. |
+| **verification-before-completion** | Verify the built system against P1 success criteria before declaring done. |
+
+Workshop excels at what Superpowers doesn't: multi-perspective design critique, autonomous execution, and standalone reviewable artifacts for different stakeholders.
 
 ---
 

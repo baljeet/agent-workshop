@@ -4,13 +4,14 @@ When the user says anything like **"run a workshop"**, **"design a workshop for 
 
 ## What to Do
 
-1. **Read the workshop manifest** at `{{WORKSHOP_DIR}}/workshop-manifest.json`
-2. **Read the protocol** at `{{WORKSHOP_DIR}}/docs/protocol.md`
-3. **Read the charter** at `{{WORKSHOP_DIR}}/docs/prompts/workshop-charter.md`
-4. **Read `SKILL.md`** at `{{WORKSHOP_DIR}}/SKILL.md` for the full facilitation guide
-5. Execute the 8-phase workshop **AUTONOMOUSLY** — no per-phase user gates
-6. After the final design doc is assembled, spawn **review agents** to critique it
-7. Present the final doc + review feedback + any collected questions to the user **ONCE**
+1. **Scan the project** — check directory structure, existing docs, package manifests, key source files. Feed findings into P1 as `{{PROJECT_SCAN}}`.
+2. **Read the workshop manifest** at `{{WORKSHOP_DIR}}/workshop-manifest.json`
+3. **Read the protocol** at `{{WORKSHOP_DIR}}/docs/protocol.md`
+4. **Read the charter** at `{{WORKSHOP_DIR}}/docs/prompts/workshop-charter.md`
+5. **Read `SKILL.md`** at `{{WORKSHOP_DIR}}/SKILL.md` for the full facilitation guide
+6. Execute the 8-phase workshop **AUTONOMOUSLY** — no per-phase user gates
+7. After the final design doc is assembled, spawn **review agents** to critique it
+8. Present the final doc + review feedback + any collected questions to the user **ONCE**
 
 ## 8-Phase Protocol (Autonomous)
 
@@ -30,7 +31,16 @@ You are the **Facilitator** AND the **entire agent team**. Adopt multiple roles 
 
 ### Autonomous Execution Flow
 
-For each phase, run WITHOUT pausing for the user:
+**Step 0: Project scan (pre-P1).** Before running any phase, scan the current project for context:
+- Directory tree (top 2-3 levels)
+- Package manifests (`package.json`, `Cargo.toml`, `pyproject.toml`, etc.)
+- Existing design docs in `docs/`
+- Key source files (entry points, config, existing architecture)
+- Recent git log (last 5-10 commits for project context)
+
+Feed this scan into P1 as `{{PROJECT_SCAN}}`. This grounds agents in reality instead of assumptions.
+
+**For each phase**, run WITHOUT pausing for the user:
 
 1. **Load the prompt** from the manifest's `prompt` field for that phase
 2. **Substitute {{VARIABLES}}** using context from prior phases (see Variable Substitution below)
@@ -80,6 +90,7 @@ At three critical milestones, save a standalone artifact file for human review. 
 
 Replace `{{KEY}}` patterns in prompts with actual values:
 
+- `{{PROJECT_SCAN}}` → Summary of existing codebase structure, manifests, docs, recent commits
 - `{{PROJECT_NAME}}` → User's project name
 - `{{USER_INTENT_TEXT}}` → User's original request
 - `{{ASSIGNED_ROLE}}` → Current role name
@@ -154,6 +165,16 @@ Present **ONCE** at the very end:
    ```
 
 **Iteration:** If the user requests changes, apply them to the affected sections and re-run the review agents on just those sections. Do NOT re-run the entire workshop.
+
+### Optional: Generate Implementation Task List
+
+If the user asks for **implementation tasks** after approving the design, generate a bite-sized task list from the design doc. Use the `writing-plans` skill pattern:
+
+- Extract components and interfaces from P4 and P5
+- Generate tasks in dependency order (shared types → core services → integrations → UI)
+- Each task: exact file paths + test-first steps + commit point
+- Save to `docs/plans/YYYY-MM-DD-[slug]-tasks.md`
+- This bridges Workshop output directly into `executing-plans` or `subagent-driven-development`
 
 ### Output Format
 
