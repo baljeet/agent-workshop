@@ -211,6 +211,23 @@
       "content": "Bite-sized tasks in dependency order with exact file paths, test-first steps, commit points (writing-plans style)",
       "sources": ["P4 architecture", "P5 component design"]
     },
+    "iterative_refinement_loop": {
+      "trigger": ["refine the design", "iterate", "loop", "improve the doc", "run the loop"],
+      "primary_metric": "block_count",
+      "metric_direction": "lower",
+      "secondary_metrics": ["concern_count", "question_count"],
+      "stop_conditions": [
+        "0 BLOCKs (READY)",
+        "3 consecutive discards (converged)",
+        "BLOCK count unchanged for 2 cycles (converged)"
+      ],
+      "per_iteration": "Run REVIEW → fix BLOCKs in affected phases → re-run REVIEW → compare → keep/discard",
+      "rules": [
+        "Never re-run the entire workshop — only affected phases",
+        "BLOCKs rooted in P1/P2/P3 → flag as QUESTION instead of looping",
+        "Track iteration history in design doc metadata"
+      ]
+    },
     "checkpoints": [
       {
         "id": "requirements",

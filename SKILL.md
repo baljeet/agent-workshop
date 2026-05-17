@@ -165,10 +165,66 @@ Present everything together at the very end:
    ```
    You can: (a) review the checkpoint files above, (b) answer the questions,
    (c) request changes to specific sections, (d) approve as-is,
-   or (e) request a deeper dive on any area
+   (e) refine/iterate/loop to improve the design, or (f) request a deeper dive on any area
    ```
 
 **Iteration:** If the user requests changes, apply them to the affected sections and re-run only the review agents (not the entire workshop).
+
+### Step 7b: Optional — Generate Implementation Task List
+
+If the user asks for **implementation tasks** after approving the design:
+
+- Extract components and interfaces from P4 (architecture) and P5 (component design)
+- Generate tasks in dependency order: shared types → core services → integrations → UI
+- Use the `writing-plans` skill pattern: each task has exact file paths, test-first steps, commit points
+- Save to `docs/plans/YYYY-MM-DD-[slug]-tasks.md`
+- This bridges Workshop output directly into `executing-plans` or `subagent-driven-development`
+
+### Step 7c: Iterative Refinement Loop (Autoresearch Mode)
+
+When the user says **"refine the design"**, **"iterate"**, **"loop"**, **"improve the doc"**, or **"run the loop"**, enter an iterative autoresearch cycle.
+
+**How it works:** The REVIEW agents act as the quality test suite. Each iteration fixes the BLOCKs they find, re-runs REVIEW, and measures whether quality improved. The loop auto-stops when the design converges.
+
+**Metrics:**
+| Metric | Direction | Meaning |
+|--------|-----------|---------|
+| **BLOCK count** | lower ↓ | Primary — showstopper defects in the design |
+| **CONCERN count** | lower ↓ | Secondary — non-blocking risks |
+| **QUESTION count** | lower ↓ | Secondary — unresolved user questions |
+
+**Per-Iteration Flow:**
+1. Run REVIEW agents on the current design doc → collect BLOCKs, CONCERNs, QUESTIONS
+2. **If 0 BLOCKs** → design is READY, stop the loop
+3. For each BLOCK: identify which phase(s) need fixing → re-run just those phases with BLOCK as context
+4. Update the design doc with fixes
+5. Re-run REVIEW agents on the updated doc
+6. **Compare BLOCK count:**
+   - Decreased → **keep** the change, continue looping
+   - Same or increased → **discard** the change, revert doc
+7. **Stop conditions:**
+   - 0 BLOCKs reached → READY
+   - 3 consecutive discards → converged
+   - BLOCK count unchanged for 2 cycles → converged
+
+**Tracking:** Append an iteration log to the end of the design doc:
+
+```markdown
+## Iteration History
+
+| Iteration | BLOCKs | CONCERNs | QUESTIONs | Status |
+|-----------|--------|----------|-----------|--------|
+| 0 (initial) | 7 | 12 | 5 | baseline |
+| 1 | 3 | 8 | 4 | keep (↓4 BLOCKs) |
+| 2 | 1 | 5 | 2 | keep (↓2 BLOCKs) |
+| 3 | 0 | 2 | 1 | READY |
+```
+
+**Rules:**
+- Never re-run the entire workshop — only affected phases per BLOCK
+- If a BLOCK traces to P1/P2/P3 (problem understanding was wrong), flag as QUESTION instead of looping
+- If CONCERN count spikes while BLOCKs drop, log the trade-off but don't discard
+- Stop presenting per-iteration; just show the final design doc + iteration log
 
 ## Variable Substitution
 

@@ -64,7 +64,7 @@ The AI reads `workshop-manifest.json`, discovers the phases, roles, and checkpoi
 → P5 → save LLD checkpoint → P6 → save error handling checkpoint
 → P7 → save test strategy checkpoint → P8 → REVIEW agents
 → save security review checkpoint → present everything to user ONCE
-→ [optional: generate task list if user asks]
+→ [optional: refine/iterate/loop to auto-improve] → [optional: generate task list]
 ```
 
 Every role response must include a critique and a safety signal:
@@ -274,6 +274,7 @@ agent-workshop serve 8080          # browse all resources via HTTP
 | Scale limits discovered at 10k users | Scalability Engineer flags them in P3 |
 | No test strategy | QA Lead defines pyramid in P7 → test-strategy.md |
 | Design doc is vague hand-waving | Standardized 9-section doc + 6 reviewable artifacts |
+| Stuck with first draft's issues | Iterative loop fixes BLOCKs until 0 remain (or convergence) |
 | You copy-paste prompts and approve every phase | AI reads manifest, executes autonomously, presents once |
 
 ---
