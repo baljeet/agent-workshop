@@ -1,169 +1,211 @@
 ---
 name: multi-agent-design-workshop
-description: "Run structured multi-agent design workshops across any AI assistant (Pi, Claude Code, Codex, etc.) to produce production-ready technical design documents. 8-phase protocol with role-based prompts, BLOCK/CONSENT/CONCERN safety rails, and deterministic markdown output."
+description: >
+  Run structured multi-agent design workshops (8 phases) where YOU (the AI) play
+  multiple specialized agent roles sequentially to produce production-ready technical
+  design documents. You are the facilitator AND the agents. Use the workshop-manifest.json
+  for phase/role metadata, docs/prompts/ for phase-specific prompts, and docs/protocol.md
+  for detailed protocol rules.
 ---
 
-# Multi-Agent Design Workshop Skill
+# Multi-Agent Design Workshop — Agent Facilitation Guide
 
 ## Overview
 
-Facilitate structured design discussions between multiple AI agents (or a single agent wearing multiple hats) to produce rigorously reviewed technical design documents. The output is a standardized markdown artifact that any developer can implement from directly — with tests that validate the implementation.
+You are the **Facilitator** AND the **entire agent team**.
 
-**Works with any LLM-based coding agent.** No code execution required. All prompts are plain markdown.
+When the user says something like "run a workshop for [idea]," you systematically execute an 8-phase design protocol. For each phase, you adopt multiple agent roles (Design Author, Product Critic, Security Engineer, etc.), generate responses for each role, synthesize them into a single phase artifact, present it to the user for approval, and only proceed to the next phase after explicit "APPROVED" or similar consent.
 
-## When to Use
+**Output:** A standardized markdown design document that a developer with zero context can implement from.
 
-Use this skill when:
-- Starting a new feature, product, system, or architectural change
-- You want multiple perspectives (security, scalability, product, etc.) before committing to an approach
-- You need a document that developers can implement from without further clarification
-- You're working across multiple AI tools and need a portable process
-
-**Do NOT use when:**
-- The change is a one-line bugfix or config tweak (use brainstorming skill instead)
-- The domain is already fully understood with no ambiguity (skip to writing-plans)
-
-## Anti-Pattern: "I Can Just Ask One Agent"
-
-A single agent produces one perspective. Security gaps, scalability bottlenecks, and UX oversights are missed until production. This skill forces structured critique from specialized viewpoints — catching issues before they become incidents.
-
-## Prerequisites
-
-Install this skill by copying the prompt templates into your agent's context. Requires:
-- `docs/prompts/workshop-charter.md` — loaded into every participating agent
-- `docs/prompts/template-library.md` — your prompt source for each phase
-- `docs/protocol.md` — reference for the facilitator (you)
-
-## The 8-Phase Workflow
-
-Run in order. Never skip phases. Each phase ends with facilitator approval.
-
-| Phase | Mode | Purpose | What You Do |
-|-------|------|---------|-------------|
-| **P1** | Roundtable | Problem Framing | Send charter + P1 prompt to all agents |
-| **P2** | Roundtable | Requirements | Extract functional/NFRs with MoSCoW |
-| **P3** | Roundtable | Approach Debate | Propose 2-3 architectures, pick one |
-| **P4** | Author/Reviewers | System Architecture | Design Author drafts; reviewers challenge |
-| **P5** | Author/Reviewers | Component Design | Interfaces, state, dependencies per component |
-| **P6** | Author/Reviewers | Error Handling | Failure modes, recovery, observability |
-| **P7** | Author/Reviewers | Testing Strategy | Test pyramid, CI gates, coverage matrix |
-| **P8** | Roundtable | Consensus | Final review, lock the design document |
-
-### Phase Transition Rule
+## Quick Start Protocol
 
 ```
-[Agents respond] → [You synthesize] → [Publish artifact] → [BLOCK check] → ["APPROVED"] → [Next phase]
+[User request] → [Load manifest] → [Review protocol] → [Execute P1-P8]
 ```
 
-## Agent Role Bank
+### Step 1: Load Resources
 
-Assign one or more roles per agent. A single agent can play multiple roles sequentially.
+On workshop start, read these files in this repo (they're in `{{WORKSHOP_DIR}}`):
 
-| Role | What They Watch For |
-|------|---------------------|
-| **Design Author** | Architecture, interfaces, data flow, component design |
-| **Product Critic** | User needs, scope creep, missing features, UX gaps |
-| **Security Engineer** | Threat surfaces, auth gaps, data exposure, compliance |
-| **Scalability Engineer** | Bottlenecks, resource limits, single points of failure |
-| **Integration Specialist** | API consistency, migration paths, third-party failures |
-| **QA/Testing Lead** | Testability, observability, coverage, flaky test detection |
-| **DevEx Advocate** | Build/debug experience, onboarding, documentation |
+1. **`workshop-manifest.json`** — Phase list, roles, variables, prompt file paths
+2. **`docs/protocol.md`** — Detailed protocol rules, BLOCK/CONSENT/CONCERN mechanics
+3. **`docs/prompts/workshop-charter.md`** — Charter to prepend to every agent turn
+
+### Step 2: Determine Phase Strategy
+
+Read the manifest's `phases` array. The general flow:
+
+| Phase | Mode | You Generate |
+|-------|------|-------------|
+| **P1-P3** | Roundtable | N role responses → synthesize |
+| **P4-P7** | Author + Reviewers | Author draft + reviewer responses → synthesize |
+| **P8** | Roundtable | N sign-offs + objections → synthesize |
+
+**Default role selection** (adjust per project complexity):
+- Agent A: Design Author
+- Agent B: Product Critic
+- Agent C: Security Engineer
+- Agent D: Scalability Engineer
+- Agent E: QA/Testing Lead
+
+### Step 3: Execute One Phase
+
+For each phase:
+
+1. **Load the prompt**: Read the file from `prompt` field in the manifest for this phase. If `prompt_source` is `template_section`, the prompt is in `docs/prompts/template-library.md` under a heading for that phase.
+
+2. **Render the prompt per role**: Substitute `{{VARIABLES}}` with context from prior phases. See "Variable Substitution" below.
+
+3. **Generate agent responses**: For each active role this phase, generate what that role would say. Use the role's `id` from the manifest's `roles` array. Each response must include:
+   - Role-specific analysis
+   - At least one concern, question, or critique
+   - BLOCK, CONCERN, or CONSENT signal
+
+4. **Synthesize**: Write a single phase artifact that resolves conflicts, incorporates valid critiques, and documents dissent.
+
+5. **Present to user**: Show the synthesized artifact. Ask: "Does this look right? APPROVED to proceed?"
+
+6. **Gate**: Wait for explicit approval before proceeding to next phase.
+
+### Step 4: Assemble Final Document
+
+After P8 consensus, assemble all 8 phase artifacts into one markdown document with this structure:
+
+```markdown
+# Design Document — [Project Name]
+
+## 0. Workshop Metadata
+## 1. Problem Statement
+## 2. Requirements
+## 3. Selected Approach
+## 4. System Architecture
+## 5. Component Design
+## 6. Error Handling & Edge Cases
+## 7. Testing & Validation Strategy
+## 8. Consensus Record
+```
+
+Save as `docs/plans/YYYY-MM-DD-[project-slug]-design.md`.
+
+### Step 5: Validate
+
+Run `scripts/check-readiness.sh` against the final document if available:
+```bash
+bash scripts/check-readiness.sh docs/plans/YYYY-MM-DD-[slug]-design.md
+```
+
+Report results to the user.
+
+## Variable Substitution
+
+When rendering prompts, substitute these variable patterns:
+
+| Variable | Source |
+|----------|--------|
+| `{{PROJECT_NAME}}` | User's project name or description |
+| `{{USER_INTENT_TEXT}}` | The user's original request |
+| `{{ASSIGNED_ROLE}}` | Current role being played (from manifest) |
+| `{{P1_ARTIFACT}}` | Full text of P1 synthesized artifact |
+| `{{P1_ARTIFACT_SUMMARY}}` | 2-3 sentence summary of P1 artifact |
+| `{{P2_REQUIREMENTS}}` | Full P2 requirements text |
+| `{{P2_REQUIREMENTS_SUMMARY}}` | Summary of P2 requirements |
+| `{{P3_SELECTED_APPROACH}}` | The chosen approach from P3 |
+| `{{P4_ARCHITECTURE}}` | Full P4 architecture document |
+| `{{P5_COMPONENTS}}` | Full P5 component design |
+| `{{P6_ERRORS}}` | Full P6 error handling doc |
+| `{{COMPONENT_NAME}}` | Per-component (P5 iterates over components) |
+| `{{FULL_DESIGN_DOC}}` | All prior artifacts concatenated |
+
+**Rules:**
+- Read the manifest's `variables` array for the current phase to know which variables are expected
+- Always provide context from prior phases so the "agent" has the full picture
+- Never leave raw `{{VARIABLES}}` in prompts you generate
 
 ## The Safety Protocol: BLOCK / CONSENT / CONCERN
 
-Any agent can raise flags:
+Every agent response must end with one signal:
 
-- **BLOCK** `[section] — [reason]` → Halts progress. You decide: valid (backtrack), invalid (override with rationale).
-- **CONCERN** `[section] — [reason]` → Log it, move on. Non-blocking risk.
-- **CONSENT** `[section] — [agent]` → Explicit endorsement. Required from all reviewers before phase gate.
+| Signal | Format | When Used |
+|--------|--------|-----------|
+| **BLOCK** | `BLOCK [section] — [reason]` | Critical flaw, showstopper, safety issue |
+| **CONCERN** | `CONCERN [section] — [reason]` | Risk that should be logged but doesn't halt |
+| **CONSENT** | `CONSENT [section] — [agent-name]` | Explicit endorsement, no issues found |
 
-## Quick-Start Facilitation
+**Rules:**
+- If ANY agent raises BLOCK, you (facilitator) must address it before proceeding
+- You may resolve the BLOCK by fixing the issue, or you may OVERRIDE with documented rationale
+- Every reviewer must provide CONSENT before you ask the user for phase approval
+- "Looks good to me" does NOT count — force at least one critique or concern
 
-### Step 1: Load Charter
+## Agent Role Prompts
 
-Send to every participating agent:
-
-```markdown
-{{ contents of docs/prompts/workshop-charter.md }}
-```
-
-### Step 2: Assign Roles
-
-Tell each agent their role. Example with 3 agents:
-- Agent A → Design Author (also plays DevEx in review phases)
-- Agent B → Product Critic + Scalability Engineer
-- Agent C → Security Engineer + QA Lead
-
-### Step 3: Run P1
-
-Send P1 prompt (from `docs/prompts/template-library.md`) with your project intent.
-
-### Step 4: Synthesize
-
-Read all responses. Write a single P1 artifact in this format:
+When generating an agent response, prepend the charter and include the role identity:
 
 ```markdown
-## P1 Problem Statement — {{Project Name}}
+{{WORKSHOP_CHARTER}}
 
-### Problem Summary
-### Constraints
-### Success Criteria
-### Anti-Requirements
-### Resolved Ambiguities
-### Open Questions (deferred)
+---
+
+# PHASE {{PHASE_NUMBER}}: {{PHASE_NAME}}
+**Mode:** {{MODE}}
+**Your Role:** {{ROLE_NAME}}
+**Focus:** {{ROLE_FOCUS}}
+
+{{PHASE_PROMPT_BODY}}
 ```
 
-### Step 5: Gate
+Load the charter from `docs/prompts/workshop-charter.md`, the prompt body from the phase's prompt file.
 
-Say: "P1 COMPLETE. BLOCK check?"
+## Phase-Specific Notes
 
-Collect CONSENT from all agents. If BLOCK, resolve or backtrack.
+### P1: Problem Framing
+- Ask the user clarifying questions if intent is vague
+- Do NOT propose solutions in P1 — pure problem understanding only
+- Output: Problem Summary, Constraints, Success Criteria, Anti-Requirements
 
-Say: **"APPROVED, proceed to Phase 2."**
+### P2: Requirements
+- Use MoSCoW (Must have / Should have / Could have / Won't have)
+- Identify functional requirements as R1, R2, ...
+- Identify non-function requirements as NFR1, NFR2, ...
+- List edge cases explicitly
 
-### Repeat for P2-P8
+### P3: Approach Debate
+- You (as Design Author) propose 2-3 architectures
+- Each other role critiques and votes
+- You synthesize and SELECT one approach with justification
 
-## Post-Workshop
+### P4-P7: Author/Reviewers
+- Design Author writes the full artifact first
+- Each reviewer role responds independently
+- You synthesize author draft + reviewer feedback into one polished artifact
+- Iterate if BLOCKs exist
 
-After implementation, optionally run **P9 Retrospective** (see `docs/phase-9-retrospective.md`) to capture learnings and improve the protocol.
+### P8: Consensus
+- Each role either CONSENTS or registers DISSENT
+- Document any dissent with rationale
+- Lock the design document — no changes after P8 without new workshop cycle
 
-Validate the final design document:
+## Output Requirements
 
-```bash
-chmod +x scripts/check-readiness.sh
-./scripts/check-readiness.sh my-design-doc.md
-```
+The final design document must be implementable by someone with:
+- Zero knowledge of the original conversation
+- Only the document in front of them
 
-## Example
-
-See `docs/examples/todo-app-workshop.md` for a complete P1-P8 transcript showing:
-- Real agent dialogue
-- BLOCK resolution and backtracking
-- Facilitator synthesis
-- Consensus finalization
-
-## Output Format
-
-The final artifact is a markdown design document with 8 sections:
-
-1. Problem Statement
-2. Requirements (functional + NFRs + edge cases)
-3. Selected Approach (with rejected alternatives)
-4. System Architecture (diagrams, data flow, APIs)
-5. Component Design (interfaces, state, dependencies)
-6. Error Handling & Edge Cases (failure matrix, recovery)
-7. Testing & Validation Strategy (pyramid, CI gates, coverage)
-8. Consensus Record (agent sign-offs or documented dissent)
-
-## Key Principles
-
-- **Synthesize, don't collect.** You write the phase artifact. Agents provide raw input.
-- **Force critique.** If an agent says "looks good," re-prompt: "Find at least one concern or question."
-- **Backtrack on BLOCK.** Valid objections are features, not bugs — they prevent incidents.
-- **Document dissent.** Override decisions are recorded. Silence is not consent.
+Every section must be self-contained. Reference prior sections by name, not by conversation context.
 
 ## Related Skills
 
-- `brainstorming` — Use for simpler ideation before invoking this workshop skill
-- `writing-plans` — Use after P8 consensus to create implementation tasks from the design doc
-- `executing-plans` — Use to implement the tasks from writing-plans
+- `brainstorming` — Use BEFORE this workshop if the user's idea is not yet well-defined
+- `writing-plans` — Invoke AFTER P8 consensus to create implementation tasks
+- `executing-plans` — Use after writing-plans to implement
+- `test-driven-development` — Use during implementation if available
+
+## Anti-Patterns
+
+| Anti-Pattern | Why Wrong |
+|-------------|-----------|
+| "I'll just write a design directly" | Misses multi-perspective review, catches fewer issues |
+| "P1 is clear, let's skip to P4" | Violates protocol; assumptions in P4 compound |
+| "All agents say CONCERN, no BLOCK, but I disagree" | You can override, but must document your rationale |
+| "I'll ask the user what they think between every agent" | Too slow; synthesize first, then present |

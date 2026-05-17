@@ -1,0 +1,173 @@
+{
+  "name": "multi-agent-design-workshop",
+  "version": "1.3.0",
+  "description": "Facilitate structured 8-phase design discussions between multiple AI agent roles",
+  "agent_instructions": "docs/protocol.md",
+  "charter": "docs/prompts/workshop-charter.md",
+  "phases": [
+    {
+      "id": "p1",
+      "name": "Problem Framing",
+      "mode": "roundtable",
+      "duration": "5-10 min",
+      "input_from_user": "Project intent, context, constraints",
+      "output_artifact": "P1 Problem Statement",
+      "prompt": "docs/prompts/phase-1-problem-framing.md",
+      "prompt_source": "file",
+      "variables": ["PROJECT_NAME", "USER_INTENT_TEXT", "ASSIGNED_ROLE", "PROJECT_FILES_OR_NOTES"]
+    },
+    {
+      "id": "p2",
+      "name": "Requirements",
+      "mode": "roundtable",
+      "duration": "10-15 min",
+      "input_from_user": null,
+      "depends_on": "p1",
+      "output_artifact": "P2 Requirements Document",
+      "prompt": "template-library#p2",
+      "prompt_source": "template_section",
+      "variables": ["PROJECT_NAME", "P1_ARTIFACT_SUMMARY", "ASSIGNED_ROLE"]
+    },
+    {
+      "id": "p3",
+      "name": "Approach Debate",
+      "mode": "roundtable",
+      "duration": "15-20 min",
+      "input_from_user": null,
+      "depends_on": "p2",
+      "output_artifact": "P3 Architecture Options + Selected Approach",
+      "prompt": "template-library#p3",
+      "prompt_source": "template_section",
+      "variables": ["PROJECT_NAME", "P1_ARTIFACT", "P2_REQUIREMENTS_SUMMARY", "ASSIGNED_ROLE"]
+    },
+    {
+      "id": "p4",
+      "name": "System Architecture",
+      "mode": "author-reviewers",
+      "duration": "20-30 min",
+      "input_from_user": null,
+      "depends_on": "p3",
+      "output_artifact": "P4 System Architecture Document",
+      "prompt": "docs/prompts/phase-4-architecture-author.md",
+      "prompt_source": "file",
+      "variables": ["PROJECT_NAME", "P1_ARTIFACT", "P2_REQUIREMENTS", "P3_SELECTED_APPROACH", "ASSIGNED_ROLE"],
+      "special": "Design Author writes; other roles review with BLOCK/CONSENT/CONCERN"
+    },
+    {
+      "id": "p5",
+      "name": "Component Design",
+      "mode": "author-reviewers",
+      "duration": "30-45 min",
+      "input_from_user": null,
+      "depends_on": "p4",
+      "output_artifact": "P5 Component Design Document",
+      "prompt": "template-library#p5",
+      "prompt_source": "template_section",
+      "variables": ["PROJECT_NAME", "P4_ARCHITECTURE", "COMPONENT_NAME", "ASSIGNED_ROLE"]
+    },
+    {
+      "id": "p6",
+      "name": "Error Handling",
+      "mode": "author-reviewers",
+      "duration": "15-20 min",
+      "input_from_user": null,
+      "depends_on": "p5",
+      "output_artifact": "P6 Error Handling & Edge Cases",
+      "prompt": "template-library#p6",
+      "prompt_source": "template_section",
+      "variables": ["PROJECT_NAME", "P4_ARCHITECTURE", "P5_COMPONENTS", "ASSIGNED_ROLE"]
+    },
+    {
+      "id": "p7",
+      "name": "Testing Strategy",
+      "mode": "author-reviewers",
+      "duration": "15-20 min",
+      "input_from_user": null,
+      "depends_on": "p6",
+      "output_artifact": "P7 Testing & Validation Strategy",
+      "prompt": "template-library#p7",
+      "prompt_source": "template_section",
+      "variables": ["PROJECT_NAME", "P4_ARCHITECTURE", "P5_COMPONENTS", "P6_ERRORS", "ASSIGNED_ROLE"]
+    },
+    {
+      "id": "p8",
+      "name": "Consensus",
+      "mode": "roundtable",
+      "duration": "10-15 min",
+      "input_from_user": null,
+      "depends_on": "p7",
+      "output_artifact": "P8 Consensus Record + Final Design Document",
+      "prompt": "docs/prompts/phase-8-consensus.md",
+      "prompt_source": "file",
+      "variables": ["PROJECT_NAME", "FULL_DESIGN_DOC", "ASSIGNED_ROLE"]
+    }
+  ],
+  "roles": [
+    {
+      "id": "design-author",
+      "name": "Design Author",
+      "focus": "Architecture, interfaces, data flow, component design",
+      "phases_active": ["p4", "p5", "p6", "p7"]
+    },
+    {
+      "id": "product-critic",
+      "name": "Product Critic",
+      "focus": "User needs, scope creep, missing features, UX gaps",
+      "phases_active": "all"
+    },
+    {
+      "id": "security-engineer",
+      "name": "Security Engineer",
+      "focus": "Threat surfaces, auth gaps, data exposure, compliance",
+      "phases_active": "all"
+    },
+    {
+      "id": "scalability-engineer",
+      "name": "Scalability Engineer",
+      "focus": "Bottlenecks, resource limits, single points of failure",
+      "phases_active": "all"
+    },
+    {
+      "id": "integration-specialist",
+      "name": "Integration Specialist",
+      "focus": "API consistency, migration paths, third-party failures",
+      "phases_active": ["p3", "p4", "p5"]
+    },
+    {
+      "id": "qa-lead",
+      "name": "QA/Testing Lead",
+      "focus": "Testability, observability, coverage, flaky test detection",
+      "phases_active": "all"
+    },
+    {
+      "id": "devex-advocate",
+      "name": "DevEx Advocate",
+      "focus": "Build/debug experience, onboarding, documentation",
+      "phases_active": ["p4", "p5", "p7"]
+    }
+  ],
+  "safety_protocol": {
+    "signals": [
+      {"signal": "BLOCK", "meaning": "Critical issue, halts progress", "action": "Facilitator resolves or backtracks"},
+      {"signal": "CONCERN", "meaning": "Non-blocking risk", "action": "Log it and move on"},
+      {"signal": "CONSENT", "meaning": "Explicit endorsement", "action": "Required from all reviewers before phase gate"}
+    ]
+  },
+  "output": {
+    "design_doc_sections": [
+      "1. Problem Statement",
+      "2. Requirements (functional + NFRs + edge cases)",
+      "3. Selected Approach (with rejected alternatives)",
+      "4. System Architecture (diagrams, data flow, APIs)",
+      "5. Component Design (interfaces, state, dependencies)",
+      "6. Error Handling & Edge Cases (failure matrix, recovery)",
+      "7. Testing & Validation Strategy (pyramid, CI gates, coverage)",
+      "8. Consensus Record (agent sign-offs or documented dissent)",
+      "9. Workshop Metadata"
+    ]
+  },
+  "tools": {
+    "cli": "bin/pi-workshop",
+    "validate": "scripts/check-readiness.sh"
+  }
+}

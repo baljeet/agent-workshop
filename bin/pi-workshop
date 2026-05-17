@@ -1,0 +1,597 @@
+#!/usr/bin/env bash
+#
+# pi-workshop — CLI for Multi-Agent Design Workshop
+# https://github.com/baljeet/pi-multi-agent-design-workshop
+#
+# Usage: pi-workshop <command> [options]
+#
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+VERSION="1.3.0"
+
+# ─── Colors ──────────────────────────────────────────────────────
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+MAGENTA='\033[0;35m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
+NC='\033[0m'
+
+# ─── Helpers ─────────────────────────────────────────────────────
+header() {
+    echo -e "${CYAN}═══════════════════════════════════════════════════════════${NC}"
+    echo -e "${BOLD}$1${NC}"
+    echo -e "${CYAN}═══════════════════════════════════════════════════════════${NC}"
+}
+
+info()    { echo -e "${BLUE}ℹ${NC}  $1"; }
+success() { echo -e "${GREEN}✓${NC}  $1"; }
+warn()    { echo -e "${YELLOW}⚠${NC}  $1"; }
+error()   { echo -e "${RED}✗${NC}  $1"; }
+phase()   { echo -e "${MAGENTA}▶ $1${NC}"; }
+
+# ─── File Checkers ───────────────────────────────────────────────
+check_file() {
+    if [[ ! -f "$1" ]]; then
+        error "Missing: $1"
+        echo "   Is the workshop repo fully cloned?"
+        exit 1
+    fi
+}
+
+# ─── Prompt Rendering ────────────────────────────────────────────
+render_prompt() {
+    local file="$1"
+    shift
+    
+    check_file "$file"
+    
+    local content
+    content=$(cat "$file")
+    
+    # Substitute KEY=VALUE pairs from command line args
+    while [[ $# -gt 0 ]]; do
+        local kv="$1"
+        if [[ "$kv" =~ ^--vars$ ]]; then
+            # JSON vars file handled by caller
+            shift; continue
+        fi
+        if [[ "$kv" =~ ^[A-Z_]+= ]]; then
+            local key="${kv%%=*}"
+            local val="${kv#*=}"
+            # Unwrap quotes if present
+            val="${val#\"}"; val="${val%\"}"
+            val="${val#\'}"; val="${val%\'}"
+            content=$(echo "$content" | sed "s|{{${key}}}|${val}|g; s|{{${key}_NAME}}|${val}|g" 2>/dev/null || echo "$content")
+        fi
+        shift
+    done
+    
+    echo "$content"
+}
+
+render_from_json_vars() {
+    local file="$1"
+    local vars_file="$2"
+    
+    check_file "$file"
+    
+    if command -v jq &>/dev/null; then
+        local content
+        content=$(cat "$file")
+        while IFS= read -r line; do
+            local key val
+            key=$(echo "$line" | jq -r '.key')
+            val=$(echo "$line" | jq -r '.value')
+            content=$(echo "$content" | sed "s|{{${key}}}|${val}|g; s|{{${key}_NAME}}|${val}|g" 2>/dev/null || echo "$content")
+        done < <(jq -c 'to_entries[]' "$vars_file")
+        echo "$content"
+    else
+        warn "jq not available, falling back to simple substitution"
+        cat "$file"
+    fi
+}
+
+# ─── Manifest loader ─────────────────────────────────────────────
+get_manifest() {
+    local manifest="$REPO_ROOT/workshop-manifest.json"
+    check_file "$manifest"
+    cat "$manifest"
+}
+
+# ─── Commands ────────────────────────────────────────────────────
+
+cmd_help() {
+    cat << 'EOF'
+pi-workshop — Multi-Agent Design Workshop CLI v1.3.0
+
+USAGE:
+    pi-workshop <command> [options]
+
+COMMANDS:
+    start [project-name]     Start an interactive workshop session
+    render <phase>            Render a prompt with variable substitution
+    charter                   Print the workshop charter
+    manifest                  Dump the workshop manifest JSON
+    validate <doc.md>         Validate a design document
+    copy <phase>              Copy a prompt to clipboard (macOS/Linux)
+    list                      List available phases and resources
+    serve [port]              Start an HTTP server with all prompts
+    help                      Show this help
+
+EXAMPLES:
+    # Start a workshop for a new project
+    pi-workshop start "real-time todo app"
+
+    # Render a phase prompt with variables (for agents)
+    pi-workshop render p1 PROJECT_NAME="My App" USER_INTENT_TEXT="build a todo app"
+
+    # Render from JSON variables file
+    pi-workshop render p4 --vars vars.json
+
+    # Get the manifest for programmatic use
+    pi-workshop manifest
+
+    # Copy Phase 4 prompt to clipboard
+    pi-workshop copy p4
+
+    # Validate your design doc
+    pi-workshop validate my-design.md
+
+    # Serve prompts at http://localhost:8080
+    pi-workshop serve 8080
+
+PHASES (for prompt/copy):
+    charter           — Workshop charter (send to all agents)
+    p1, problem       — Phase 1: Problem Framing
+    p2, requirements  — Phase 2: Requirements
+    p3, approach      — Phase 3: Approach Debate
+    p4, architecture  — Phase 4: System Architecture
+    p5, component     — Phase 5: Component Design
+    p6, errors        — Phase 6: Error Handling
+    p7, testing       — Phase 7: Testing Strategy
+    p8, consensus     — Phase 8: Consensus
+    p9, retro         — Phase 9: Retrospective
+    all               — All prompts concatenated
+
+ENVIRONMENT:
+    WORKSHOP_DIR     — Override repo root (default: auto-detected)
+
+RENDER SYNTAX:
+    pi-workshop render <phase> [KEY=VALUE]... [--vars file.json]
+    pi-workshop render p1 PROJECT_NAME="My App" USER_INTENT_TEXT="..."
+    pi-workshop render p4 --vars /tmp/variables.json
+
+    Supported variable formats:
+      {{KEY}} and {{KEY_NAME}} are replaced with the provided value.
+EOF
+}
+
+cmd_list() {
+    local manifest
+    manifest=$(get_manifest 2>/dev/null || echo "")
+    
+    header "Available Workshop Resources"
+    
+    echo -e "\n${BOLD}Phases (from manifest):${NC}"
+    if [[ -n "$manifest" ]] && command -v jq &>/dev/null; then
+        jq -r '.phases[] | "   " + .id + "  — " + .name + " (" + .mode + ")"' <<< "$manifest"
+    else
+        for i in {1..8}; do
+            echo "   p$i  — Phase $i"
+        done
+        echo "   p9  — Phase 9 (Retrospective)"
+    fi
+    
+    echo -e "\n${BOLD}Roles:${NC}"
+    if [[ -n "$manifest" ]] && command -v jq &>/dev/null; then
+        jq -r '.roles[] | "   " + .id + "  — " + .name' <<< "$manifest"
+    fi
+    
+    echo -e "\n${BOLD}Prompts:${NC}"
+    if [[ -d "$REPO_ROOT/docs/prompts" ]]; then
+        for f in "$REPO_ROOT/docs/prompts"/*.md; do
+            [[ -f "$f" ]] || continue
+            echo "   • $(basename "$f" .md)"
+        done
+    fi
+    
+    echo -e "\n${BOLD}Documents:${NC}"
+    echo "   • workshop-manifest.json        — Machine-readable phase/role metadata"
+    echo "   • docs/protocol.md              — Full 8-phase protocol"
+    echo "   • docs/phase-9-retrospective.md  — Post-implementation retro"
+    echo "   • FACILITATOR-CARD.md           — One-page quick reference"
+    
+    echo -e "\n${BOLD}Examples:${NC}"
+    if [[ -d "$REPO_ROOT/docs/examples" ]]; then
+        for f in "$REPO_ROOT/docs/examples"/*.md; do
+            [[ -f "$f" ]] || continue
+            echo "   • docs/examples/$(basename "$f")"
+        done
+    fi
+    
+    echo -e "\n${BOLD}Scripts:${NC}"
+    echo "   • scripts/check-readiness.sh    — Design doc validator"
+}
+
+cmd_manifest() {
+    get_manifest
+}
+
+cmd_render() {
+    local phase="${1:-}"
+    shift || true
+    
+    if [[ -z "$phase" ]]; then
+        error "Phase required. Run: pi-workshop render <phase>"
+        exit 1
+    fi
+    
+    local file=""
+    case "$phase" in
+        charter|workshop-charter)
+            file="$REPO_ROOT/docs/prompts/workshop-charter.md" ;;
+        p1|phase-1|phase-1-problem-framing)
+            file="$REPO_ROOT/docs/prompts/phase-1-problem-framing.md" ;;
+        p4|architecture|phase-4|phase-4-architecture-author)
+            file="$REPO_ROOT/docs/prompts/phase-4-architecture-author.md" ;;
+        p8|consensus|phase-8|phase-8-consensus)
+            file="$REPO_ROOT/docs/prompts/phase-8-consensus.md" ;;
+        p2|p3|p5|p6|p7)
+            warn "Phase $phase uses template-library.md sections"
+            file="$REPO_ROOT/docs/prompts/template-library.md" ;;
+        *)
+            error "Unknown phase: $phase"
+            exit 1 ;;
+    esac
+    
+    # Check for --vars flag
+    local vars_file=""
+    local args=()
+    while [[ $# -gt 0 ]]; do
+        if [[ "$1" == "--vars" ]]; then
+            vars_file="$2"
+            shift 2
+        else
+            args+=("$1")
+            shift
+        fi
+    done
+    
+    if [[ -n "$vars_file" ]]; then
+        render_from_json_vars "$file" "$vars_file"
+    else
+        render_prompt "$file" "${args[@]}"
+    fi
+}
+
+cmd_prompt() {
+    local phase="${1:-}"
+    local project="${2:-}"
+    
+    if [[ -z "$phase" ]]; then
+        error "Phase required. Run: pi-workshop prompt <phase>"
+        echo "   Phases: charter, p1-p8, all"
+        exit 1
+    fi
+    
+    local file=""
+    
+    case "$phase" in
+        charter|workshop-charter)
+            file="$REPO_ROOT/docs/prompts/workshop-charter.md" ;;
+        p1|problem|phase-1|phase-1-problem-framing)
+            file="$REPO_ROOT/docs/prompts/phase-1-problem-framing.md" ;;
+        p2|requirements|phase-2)
+            file="$REPO_ROOT/docs/prompts/template-library.md" ;;
+        p3|approach|phase-3)
+            file="$REPO_ROOT/docs/prompts/template-library.md" ;;
+        p4|architecture|phase-4|phase-4-architecture-author)
+            file="$REPO_ROOT/docs/prompts/phase-4-architecture-author.md" ;;
+        p5|component|phase-5)
+            file="$REPO_ROOT/docs/prompts/template-library.md" ;;
+        p6|errors|error|phase-6)
+            file="$REPO_ROOT/docs/prompts/template-library.md" ;;
+        p7|testing|test|phase-7)
+            file="$REPO_ROOT/docs/prompts/template-library.md" ;;
+        p8|consensus|phase-8|phase-8-consensus)
+            file="$REPO_ROOT/docs/prompts/phase-8-consensus.md" ;;
+        p9|retro|retrospective|phase-9)
+            file="$REPO_ROOT/docs/phase-9-retrospective.md" ;;
+        all|everything)
+            {
+                echo "# WORKSHOP CHARTER"
+                echo ""
+                cmd_prompt "charter" "$project"
+                echo ""
+                echo "---"
+                echo ""
+                for p in p1 p2 p3 p4 p5 p6 p7 p8; do
+                    echo ""
+                    echo "# PHASE PROMPTS"
+                    echo ""
+                    cmd_prompt "$p" "$project" 2>/dev/null || true
+                    echo ""
+                    echo "---"
+                done
+            }
+            return ;;
+        *)
+            error "Unknown phase: $phase"
+            echo "   Run 'pi-workshop list' to see available phases."
+            exit 1 ;;
+    esac
+    
+    if [[ -n "$file" ]]; then
+        header "Phase: $phase"
+        if [[ -n "$project" ]]; then
+            render_prompt "$file" PROJECT_NAME="$project"
+        else
+            render_prompt "$file"
+        fi
+    fi
+}
+
+cmd_copy() {
+    local phase="${1:-}"
+    
+    if [[ -z "$phase" ]]; then
+        error "Phase required. Run: pi-workshop copy <phase>"
+        exit 1
+    fi
+    
+    # Detect clipboard tool
+    local clipper=""
+    if command -v pbcopy &>/dev/null; then
+        clipper="pbcopy"
+    elif command -v xclip &>/dev/null; then
+        clipper="xclip -selection clipboard"
+    elif command -v xsel &>/dev/null; then
+        clipper="xsel --clipboard --input"
+    elif command -v wl-copy &>/dev/null; then
+        clipper="wl-copy"
+    else
+        error "No clipboard tool found. Install pbcopy (macOS), xclip, xsel, or wl-copy."
+        exit 1
+    fi
+    
+    cmd_prompt "$phase" | $clipper
+    success "Phase '$phase' prompt copied to clipboard!"
+}
+
+cmd_validate() {
+    local doc="${1:-}"
+    
+    if [[ -z "$doc" ]]; then
+        error "Document path required."
+        echo "   Usage: pi-workshop validate path/to/design-doc.md"
+        exit 1
+    fi
+    
+    if [[ ! -f "$doc" ]]; then
+        error "File not found: $doc"
+        exit 1
+    fi
+    
+    local script="$REPO_ROOT/scripts/check-readiness.sh"
+    if [[ -x "$script" ]]; then
+        "$script" "$doc"
+    else
+        bash "$script" "$doc"
+    fi
+}
+
+cmd_serve() {
+    local port="${1:-8080}"
+    
+    if command -v python3 &>/dev/null; then
+        cd "$REPO_ROOT"
+        info "Starting HTTP server on http://localhost:$port"
+        info "Press Ctrl+C to stop"
+        python3 -m http.server "$port"
+    elif command -v python &>/dev/null; then
+        cd "$REPO_ROOT"
+        info "Starting HTTP server on http://localhost:$port"
+        info "Press Ctrl+C to stop"
+        python -m SimpleHTTPServer "$port"
+    else
+        error "Python not found. Cannot start server."
+        exit 1
+    fi
+}
+
+cmd_start() {
+    local project_name="${1:-}"
+    
+    header "Multi-Agent Design Workshop"
+    echo -e "${CYAN}Version $VERSION${NC}\n"
+    
+    # Get project name
+    if [[ -z "$project_name" ]]; then
+        echo -n "Project name (e.g., 'real-time todo app'): "
+        read -r project_name
+    fi
+    
+    if [[ -z "$project_name" ]]; then
+        error "Project name is required."
+        exit 1
+    fi
+    
+    local outdir
+    outdir=$(echo "$project_name" | tr '[:upper:]' '[:lower:]' | tr -c '[:alnum:]' '-' | sed 's/^-//;s/-$//;s/--*/-/g')
+    outdir="${outdir}-design-workshop"
+    local outfile="$outdir/design-document.md"
+    
+    echo ""
+    info "Project: ${BOLD}$project_name${NC}"
+    info "Output:  ${BOLD}$outfile${NC}"
+    echo ""
+    
+    echo -e "${BOLD}Select phases to run:${NC}"
+    echo "   [a] All 8 phases (recommended)"
+    echo "   [c] Custom selection"
+    echo "   [1-8] Individual phase"
+    echo ""
+    echo -n "Choice [a]: "
+    local choice
+    read -r choice
+    choice="${choice:-a}"
+    
+    mkdir -p "$outdir"
+    
+    cat > "$outfile" << META
+# Design Document — $project_name
+
+> Generated by Multi-Agent Design Workshop v$VERSION
+> Date: $(date '+%Y-%m-%d')
+> Project: $project_name
+
+---
+
+## 0. Workshop Metadata
+
+- **Project:** $project_name
+- **Date:** $(date '+%Y-%m-%d')
+- **Facilitator:** $(whoami)
+- **Status:** In Progress
+
+### Agent Roles
+
+| Agent | Roles | Model |
+|-------|-------|-------|
+| A     | Design Author         | |
+| B     | Product Critic        | |
+| C     | Security Engineer     | |
+| D     | Scalability Engineer  | |
+| E     | QA/Testing Lead       | |
+
+---
+
+META
+
+    success "Design document initialized at $outfile"
+    
+    local phase_order=(1 2 3 4 5 6 7 8)
+    
+    case "$choice" in
+        a|A|all) phase_order=(1 2 3 4 5 6 7 8) ;;
+        c|C|custom)
+            echo -n "Enter phases to run (e.g., 1 2 4): "
+            read -r custom_phases
+            phase_order=()
+            for p in $custom_phases; do
+                if [[ "$p" =~ ^[1-8]$ ]]; then
+                    phase_order+=("$p")
+                fi
+            done
+            ;;
+        [1-8]) phase_order=("$choice") ;;
+        *) warn "Unknown choice '$choice', running all phases." ;;
+    esac
+    
+    echo ""
+    
+    declare -A phase_name=
+    phase_name[1]="Problem Framing"
+    phase_name[2]="Requirements"
+    phase_name[3]="Approach Debate"
+    phase_name[4]="System Architecture"
+    phase_name[5]="Component Design"
+    phase_name[6]="Error Handling"
+    phase_name[7]="Testing Strategy"
+    phase_name[8]="Consensus"
+    
+    for p in "${phase_order[@]}"; do
+        echo ""
+        header "Phase $p — ${phase_name[$p]}"
+        
+        local prompt_file="$outdir/prompt-phase-$p.md"
+        cmd_prompt "p$p" "$project_name" > "$prompt_file" 2>/dev/null
+        success "Prompt saved to $prompt_file"
+        
+        echo ""
+        phase "Next Steps:"
+        echo ""
+        echo "   1. Load the workshop charter:"
+        echo "      pi-workshop charter"
+        echo ""
+        echo "   2. Send Phase $p prompt to your agents:"
+        echo "      pi-workshop prompt p$p"
+        echo ""
+        echo "   3. After agents respond, synthesize their output."
+        echo "   4. Append the P${p} artifact to $outfile"
+        echo ""
+        
+        if [[ "$p" != "${phase_order[-1]}" ]]; then
+            echo -n "Press Enter when ready for next phase..."
+            read -r
+        fi
+    done
+    
+    echo ""
+    header "Workshop Complete!"
+    success "Design document: $outfile"
+    info "Validate with: pi-workshop validate $outfile"
+    info "Facilitator guide: $REPO_ROOT/FACILITATOR-CARD.md"
+}
+
+# ─── Main ────────────────────────────────────────────────────────
+
+main() {
+    local cmd="${1:-help}"
+    shift || true
+    
+    # Allow WORKSHOP_DIR override
+    if [[ -n "${WORKSHOP_DIR:-}" ]]; then
+        REPO_ROOT="$WORKSHOP_DIR"
+    fi
+    
+    case "$cmd" in
+        start|run|init)
+            cmd_start "$@"
+            ;;
+        prompt|p)
+            cmd_prompt "$@"
+            ;;
+        render|r)
+            cmd_render "$@"
+            ;;
+        manifest|json|meta)
+            cmd_manifest
+            ;;
+        charter|c|char)
+            cmd_charter
+            ;;
+        validate|v|check|lint)
+            cmd_validate "$@"
+            ;;
+        copy|cp|clipboard)
+            cmd_copy "$@"
+            ;;
+        list|ls)
+            cmd_list
+            ;;
+        serve|server|http)
+            cmd_serve "$@"
+            ;;
+        help|h|--help|-h)
+            cmd_help
+            ;;
+        version|--version|-v)
+            echo "pi-workshop v$VERSION"
+            ;;
+        *)
+            error "Unknown command: $cmd"
+            echo ""
+            cmd_help
+            exit 1
+            ;;
+    esac
+}
+
+main "$@"

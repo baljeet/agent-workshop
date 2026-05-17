@@ -1,191 +1,229 @@
-# Pi Multi-Agent Design Workshop Skill
+# Multi-Agent Design Workshop
 
-> A **Pi skill** for facilitating structured design discussions between multiple AI agents to produce production-ready technical design documents. Works with Pi, Claude Code, Codex, Cursor, or any LLM that reads markdown.
+> A **Pi skill** and **CLI toolkit** for running structured 8-phase design workshops that produce production-ready technical design documents. The AI reads `SKILL.md` and executes the protocol for you. The human uses `pi-workshop` to inspect prompts, validate results, or run workshops manually.
 
-[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-## What This Skill Does
+## What This Does
 
-Install this skill in your Pi environment to run **systematic 8-phase design workshops** where multiple AI assistants (or one assistant wearing multiple hats) collaborate to produce rigorously reviewed technical designs.
+When the user says "run a workshop for building X," the AI:
 
-**The output:** A standardized markdown document that a developer with **zero context** can implement from — with tests that validate the implementation.
+1. **Reads** `SKILL.md` — learns it is facilitator + all agent roles
+2. **Reads** `workshop-manifest.json` — discovers phases, roles, prompts
+3. **Reads** `docs/protocol.md` — learns BLOCK/CONSENT/CONCERN rules
+4. **Reads** `docs/prompts/workshop-charter.md` — loads charter context
+5. **Executes P1-P8** — generates multi-role responses, synthesizes, gates with user
+6. **Outputs** a `docs/plans/YYYY-MM-DD-<slug>-design.md` ready for implementation
 
-**Cross-agent compatible.** Works with Pi, Claude Code, Codex, Cursor, or any LLM-based coding tool. No code execution required.
+No copy-paste. No manual prompt management. The AI orchestrates everything from the manifest.
 
-## Installation
+**Cross-agent compatible.** Works with Pi, Claude Code, Codex, Cursor, or any LLM that reads files.
 
-### As a Pi Skill
+## How to Use
 
-1. **Clone into your Pi skills directory:**
-   ```bash
-   cd ~/.agents/skills/
-   git clone https://github.com/baljeet/pi-multi-agent-design-workshop.git
-   ```
+### Option 1: Pi Skill (Recommended — Fully Automated)
 
-2. **Activate in Pi:** The `SKILL.md` manifest is auto-detected. Start any conversation with:
-   > "Run a multi-agent design workshop for [your project idea]"
-
-3. **Pi loads the skill** and guides you through the 8-phase protocol.
-
-### As a Standalone Repo
+Clone into your Pi skills directory:
 
 ```bash
+# For Pi
+cd ~/.agents/skills/
 git clone https://github.com/baljeet/pi-multi-agent-design-workshop.git
-cd pi-multi-agent-design-workshop
 ```
 
-### Download Individual Files
+Start any conversation with:
 
-All artifacts are plain markdown. Copy only what you need:
+> **"Run a multi-agent design workshop for [your project]"**
+
+Pi loads `SKILL.md` automatically. It:
+- Reads the manifest and protocol
+- Runs all 8 phases as the facilitator
+- Adopts multiple agent roles per phase
+- Synthesizes outputs and gates with you for approval
+- Assembles the final design document
+- Validates it with `scripts/check-readiness.sh`
+
+### Option 2: CLI Toolkit (Human-Driven)
+
+For humans who want to inspect prompts, copy them to clipboard, or run workshops manually:
 
 ```bash
-# Core protocol
-curl -O https://raw.githubusercontent.com/baljeet/pi-multi-agent-design-workshop/main/docs/protocol.md
+# Install globally
+curl -fsSL https://raw.githubusercontent.com/baljeet/pi-multi-agent-design-workshop/main/install.sh | bash
 
-# Prompt templates
-curl -O https://raw.githubusercontent.com/baljeet/pi-multi-agent-design-workshop/main/docs/prompts/template-library.md
-
-# Quick reference
-curl -O https://raw.githubusercontent.com/baljeet/pi-multi-agent-design-workshop/main/FACILITATOR-CARD.md
+# Then use from any terminal
+pi-workshop list                # list phases, roles, prompts
+pi-workshop charter             # print charter
+pi-workshop prompt p1           # render Phase 1 prompt
+pi-workshop render p4 --vars vars.json   # render with variable substitution
+pi-workshop validate design.md  # validate final document
+pi-workshop manifest            # dump the JSON manifest
 ```
 
----
-
-## Quick Start
-
-```bash
-# 1. Install the skill (see above)
-
-# 2. Start a workshop in Pi:
-#    "Run a multi-agent design workshop for building a real-time todo app"
-
-# 3. Pi loads the Workshop Charter and guides you through P1-P8
-
-# 4. At each phase, Pi synthesizes agent responses and asks for your approval
-
-# 5. After P8 consensus, Pi assembles the final design document
-
-# 6. Validate before implementation
-chmod +x scripts/check-readiness.sh
-./scripts/check-readiness.sh my-design-doc.md
-```
-
----
+The CLI is a **read-only toolkit** for inspecting the protocol. The AI does the actual workshop execution.
 
 ## File Structure
 
 ```
 .
-├── SKILL.md                         # Pi skill manifest (auto-loaded)
+├── SKILL.md                          # Agent instruction manual (read by AI)
+├── workshop-manifest.json            # Phase/role/prompt metadata (read by AI)
+├── bin/
+│   └── pi-workshop                   # CLI for human-driven workflows
 ├── docs/
-│   ├── protocol.md                  # 8-phase protocol specification
-│   ├── phase-9-retrospective.md    # Post-implementation retrospective
-│   ├── prompts/                     # Render-ready prompt templates
-│   │   ├── workshop-charter.md
+│   ├── protocol.md                   # Detailed protocol rules
+│   ├── phase-9-retrospective.md     # Post-implementation retro
+│   ├── prompts/
+│   │   ├── workshop-charter.md      # Loaded into every agent turn
 │   │   ├── phase-1-problem-framing.md
 │   │   ├── phase-4-architecture-author.md
 │   │   ├── phase-8-consensus.md
-│   │   └── template-library.md     # Complete library (all phases × roles)
+│   │   └── template-library.md      # P2,P3,P5,P6,P7 prompt sections
 │   └── examples/
-│       └── todo-app-workshop.md    # Full P1-P8 mock transcript
+│       └── todo-app-workshop.md     # Full P1-P8 transcript
 ├── scripts/
-│   └── check-readiness.sh          # Design doc validation
-├── FACILITATOR-CARD.md             # One-page quick reference
-├── CHANGELOG.md                    # Version history
-├── LICENSE                         # MIT
-└── README.md                       # This file
+│   └── check-readiness.sh           # Design doc validation
+├── install.sh                        # One-line global install
+├── FACILITATOR-CARD.md              # Human quick reference
+├── CHANGELOG.md
+└── README.md                         # This file
 ```
 
----
+## The AI Workflow (What Happens Internally)
+
+When the user triggers a workshop, the AI follows **`SKILL.md`'s Agent Facilitation Guide**:
+
+### Step 1: Load Resources
+
+The AI reads (from this repo):
+1. `workshop-manifest.json` — phases, roles, variables, prompt file paths
+2. `docs/protocol.md` — BLOCK/CONSENT/CONCENR protocol
+3. `docs/prompts/workshop-charter.md` — charter to prepend to every agent turn
+
+### Step 2: Execute Phases
+
+The AI iterates through the manifest's `phases` array:
+
+| Phase | Mode | The AI Does |
+|-------|------|------------|
+| **P1** | Roundtable | Generates 5-7 role responses → synthesizes → asks user |
+| **P2** | Roundtable | Generates role responses with MoSCoW → synthesizes → gates |
+| **P3** | Roundtable | Design Author proposes 2-3 architectures → roles vote → AI selects |
+| **P4** | Author+Reviewers | Design Author drafts → each reviewer critiques → AI resolves |
+| **P5** | Author+Reviewers | Per-component design with reviewer feedback |
+| **P6** | Author+Reviewers | Failure matrix + recovery with reviewer review |
+| **P7** | Author+Reviewers | Test pyramid strategy with reviewer challenges |
+| **P8** | Roundtable | All roles sign off (CONSENT or documented DISSENT) |
+
+### Step 3: Variable Substitution
+
+The AI reads the `variables` array from the manifest for each phase and substitutes `{{KEY}}` patterns in prompts with context from prior phases. No raw variables left behind.
+
+Example variables: `{{PROJECT_NAME}}`, `{{USER_INTENT_TEXT}}`, `{{P1_ARTIFACT}}`, `{{P2_REQUIREMENTS}}`, etc.
+
+### Step 4: Safety Protocol
+
+Every generated agent response ends with a signal:
+
+| Signal | Used When | Action |
+|--------|-----------|--------|
+| **BLOCK** | Critical flaw, showstopper | Facilitator (AI) resolves or backtracks |
+| **CONCERN** | Risk, but non-blocking | Log and continue |
+| **CONSENT** | Full endorsement | Required from all reviewers before phase gate |
+
+The AI enforces: "If an agent says 'looks good,' re-prompt them to find at least one concern."
+
+### Step 5: Assemble & Validate
+
+After P8, the AI assembles the final design document:
+
+```markdown
+# Design Document — [Project]
+
+## 0. Workshop Metadata
+## 1. Problem Statement
+## 2. Requirements
+## 3. Selected Approach
+## 4. System Architecture
+## 5. Component Design
+## 6. Error Handling & Edge Cases
+## 7. Testing & Validation Strategy
+## 8. Consensus Record
+```
+
+Saves to `docs/plans/YYYY-MM-DD-<project-slug>-design.md`, then runs `scripts/check-readiness.sh`.
 
 ## The 8 Phases
 
-| Phase | Mode | Purpose | Duration |
-|-------|------|---------|----------|
-| **P1** | Roundtable | Problem Framing — intent, constraints, success criteria | 5-10 min |
-| **P2** | Roundtable | Requirements — functional, NFRs, edge cases | 10-15 min |
-| **P3** | Roundtable | Approach Debate — 2-3 architectures, trade-offs | 15-20 min |
-| **P4** | Author/Reviewers | System Architecture — components, data flow, APIs | 20-30 min |
-| **P5** | Author/Reviewers | Component Design — interfaces, state, dependencies | 30-45 min |
-| **P6** | Author/Reviewers | Error Handling — failure modes, recovery, observability | 15-20 min |
-| **P7** | Author/Reviewers | Testing Strategy — pyramid, CI gates, coverage | 15-20 min |
-| **P8** | Roundtable | Consensus — final review, objections, lock | 10-15 min |
+| Phase | Name | Mode | Duration |
+|-------|------|------|----------|
+| **P1** | Problem Framing | Roundtable | 5–10 min |
+| **P2** | Requirements | Roundtable | 10–15 min |
+| **P3** | Approach Debate | Roundtable | 15–20 min |
+| **P4** | System Architecture | Author/Reviewers | 20–30 min |
+| **P5** | Component Design | Author/Reviewers | 30–45 min |
+| **P6** | Error Handling | Author/Reviewers | 15–20 min |
+| **P7** | Testing Strategy | Author/Reviewers | 15–20 min |
+| **P8** | Consensus | Roundtable | 10–15 min |
 
-**Total:** ~2.5 hours for medium complexity
+## Agent Roles
 
----
+The AI can adopt any of these roles per phase:
 
-## Safety Protocol: BLOCK / CONSENT / CONCERN
+| Role | What They Watch For | Active In |
+|------|---------------------|-----------|
+| **Design Author** | Architecture, interfaces, data flow, components | P4-P7 |
+| **Product Critic** | User needs, scope creep, UX gaps | All phases |
+| **Security Engineer** | Threat surfaces, auth gaps, data exposure | All phases |
+| **Scalability Engineer** | Bottlenecks, resource limits, SPOFs | All phases |
+| **Integration Specialist** | API consistency, migration paths, third-party failures | P3-P5 |
+| **QA/Testing Lead** | Testability, observability, coverage | All phases |
+| **DevEx Advocate** | Build/debug experience, onboarding, docs | P4-P5, P7 |
 
-Any agent can raise flags at any time:
+## Why No Manual Copy-Paste?
 
-| Signal | Meaning | Action |
-|--------|---------|--------|
-| **BLOCK** | Critical issue, halts progress | Facilitator resolves or backtracks |
-| **CONCERN** | Non-blocking risk | Log it, move on |
-| **CONSENT** | Explicit endorsement | Required before phase gate |
+The old workflow (before v1.3.0) required the user to:
+1. Open markdown files
+2. Copy prompts manually
+3. Paste into agent conversations one by one
+4. Track which phase they were on
+5. Remember to validate the output
 
----
+Now the AI reads the manifest and executes the protocol automatically. The user's only interactions are:
+- **Providing the initial intent** ("design a real-time todo app")
+- **Approving each phase artifact** ("Yes, proceed to Phase 2")
+- **Reviewing the final design document**
 
-## Key Rules
-
-1. **Never skip phases.** P1 through P8 in order.
-2. **Facilitator gates every transition.** Must say "APPROVED" explicitly.
-3. **Synthesize between phases.** The facilitator produces one artifact per phase.
-4. **Force critique.** Reviewers must find at least one issue.
-5. **Backtrack on BLOCK.** Valid objections are safety features.
-
----
-
-## Example Workshop
-
-**You (Facilitator):** "Build a real-time collaborative document editor."
-
-**You → Agent A (Design Author):** [P1 prompt + user intent]  
-**You → Agent B (Product Critic):** [Same prompt]  
-**You → Agent C (Security Engineer):** [Same prompt]
-
-**Agent A:** Problem analysis + 3 questions + CONSENT  
-**Agent B:** Problem analysis + flags UX gap + CONSENT with note  
-**Agent C:** Problem analysis + flags data exposure + CONCERN
-
-**You (synthesize):** Write P1 artifact, resolve CONCERN by adding constraint.
-
-**You:** "P1 COMPLETE. BLOCK check?" → No blocks. **"APPROVED, proceed to Phase 2."**
-
-See `docs/examples/todo-app-workshop.md` for the complete transcript with BLOCK resolution and backtracking.
-
----
+The CLI exists for:
+- **Humans who want to peek** at what prompts the AI is using
+- **Debugging** — `pi-workshop render p1` shows the raw prompt
+- **Custom tooling** — `pi-workshop manifest | jq ...` for external integrations
+- **Validation** — `pi-workshop validate design.md` after workshop completion
 
 ## Version
 
-**v1.1.0** — Protocol + P9 Retrospective, example transcript, validator script, facilitator card, Pi skill manifest.
+**v1.3.0** — AI-driven workshop execution via `SKILL.md` + `workshop-manifest.json`, CLI toolkit for inspection.
 
 See [CHANGELOG.md](CHANGELOG.md).
-
----
 
 ## Roadmap
 
 - [x] v1.1.0: Retrospective Phase (P9), Pi skill manifest
 - [ ] v1.2.0: Enhanced validator (requirement traceability, contradiction detection)
-- [ ] v1.3.0: CLI helper for prompt rendering
-- [ ] v2.0.0: Multi-session support (save/resume state)
-
----
+- [x] v1.3.0: Auto-execution via `SKILL.md` + manifest, CLI toolkit
+- [ ] v1.4.0: Component-level iterative refinement (P5 sub-phases)
+- [ ] v2.0.0: Save/resume workshop state across sessions
 
 ## Contributing
 
-This is a protocol specification. Contributions:
+Contributions welcome:
 - Domain-specific prompt templates (ML, embedded, mobile)
-- Additional agent roles
+- Additional agent roles in the manifest
 - Example workshop transcripts
 - Validator enhancements
 
 Open an issue or PR.
-
----
 
 ## License
 

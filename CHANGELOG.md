@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.0] — 2026-05-17
+
+### Added
+- **`workshop-manifest.json`** — Machine-readable phase/role/prompt metadata that the AI reads to auto-execute the protocol
+- **Rewritten `SKILL.md`** — Complete agent facilitation guide telling the AI:
+  - How to load the manifest, protocol, and charter
+  - How to execute P1-P8 by adopting multiple agent roles
+  - Variable substitution rules (`{{KEY}}` → phase context)
+  - BLOCK/CONSENT/CONCERN enforcement
+  - Output assembly and validation
+- **`pi-workshop` CLI** (`bin/pi-workshop`) — Inspection toolkit for humans:
+  - `manifest` — dump JSON for programmatic use
+  - `render` — render prompt with variable substitution (`KEY=VALUE` or `--vars file.json`)
+  - `charter`, `prompt`, `copy`, `validate`, `list`, `serve`
+- **`install.sh`** — One-line global CLI installation via curl
+- **Design document auto-assembly** — AI assembles all phase artifacts into a single `docs/plans/YYYY-MM-DD-<slug>-design.md`
+
+### Changed
+- **Architecture shift:** From "user copies prompts manually" to "AI reads manifest and executes automatically"
+- **README** rewritten to describe the AI-driven workflow first, CLI as secondary inspection tool
+- **Roadmap** updated: v1.3.0 marked complete (auto-execution)
+
+### Removed
+- Manual copy-paste workflow (superseded by AI auto-execution)
+
+---
+
 ## [1.1.0] — 2026-05-17
 
 ### Added
