@@ -42,4 +42,4 @@ KNOWN CONTEXT:
 ### Ambiguities / Questions
 - [What needs clarification before we proceed?]
 
-### CONSENT or CONCERN: [your verdict on whether this problem is sufficiently defined]
+### CONSENT, CONCERN, or QUESTION: [your verdict + any questions for the user]

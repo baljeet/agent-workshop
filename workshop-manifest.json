@@ -1,7 +1,7 @@
 {
   "name": "multi-agent-design-workshop",
-  "version": "1.3.0",
-  "description": "Turn 'I want to build X' into a production-ready design document. 8-phase structured design workshop where the AI adopts 5-7 specialized roles, debates trade-offs, and gates each phase with user approval.",
+  "version": "2.0.0",
+  "description": "Turn 'I want to build X' into a production-ready design document. 8-phase structured design workshop where the AI adopts 5-7 specialized roles, debates trade-offs, resolves objections internally, then spawns fresh review agents to critique the final doc. The user sees everything once at the end.",
   "agent_instructions": "docs/protocol.md",
   "charter": "docs/prompts/workshop-charter.md",
   "phases": [
@@ -51,7 +51,7 @@
       "prompt": "docs/prompts/phase-4-architecture-author.md",
       "prompt_source": "file",
       "variables": ["PROJECT_NAME", "P1_ARTIFACT", "P2_REQUIREMENTS", "P3_SELECTED_APPROACH", "ASSIGNED_ROLE"],
-      "special": "Design Author writes; other roles review with BLOCK/CONSENT/CONCERN"
+      "special": "Design Author writes; other roles review with BLOCK/CONSENT/CONCERN/QUESTION"
     },
     {
       "id": "p5",
@@ -100,6 +100,19 @@
       "prompt": "docs/prompts/phase-8-consensus.md",
       "prompt_source": "file",
       "variables": ["PROJECT_NAME", "FULL_DESIGN_DOC", "ASSIGNED_ROLE"]
+    },
+    {
+      "id": "review",
+      "name": "Post-Workshop Review",
+      "mode": "review-agents",
+      "duration": "10-15 min",
+      "input_from_user": null,
+      "depends_on": "p8",
+      "output_artifact": "Review Agent Feedback + Collected Questions",
+      "prompt": "docs/prompts/review-agents.md",
+      "prompt_source": "file",
+      "variables": ["PROJECT_NAME", "FULL_DESIGN_DOC", "ASSIGNED_ROLE"],
+      "special": "Fresh review agents critique the complete doc; different roles from design phases"
     }
   ],
   "roles": [
@@ -146,11 +159,38 @@
       "phases_active": ["p4", "p5", "p7"]
     }
   ],
+  "review_agents": [
+    {
+      "id": "architecture-reviewer",
+      "name": "Architecture Reviewer",
+      "focus": "Structural integrity, gap analysis, contradiction detection",
+      "phases_active": ["review"]
+    },
+    {
+      "id": "implementation-reviewer",
+      "name": "Implementation Reviewer",
+      "focus": "Buildability, clarity, missing details a developer would need",
+      "phases_active": ["review"]
+    },
+    {
+      "id": "risk-reviewer",
+      "name": "Risk Reviewer",
+      "focus": "Production failure modes, security gaps, operational risks",
+      "phases_active": ["review"]
+    },
+    {
+      "id": "product-reviewer",
+      "name": "Product Reviewer",
+      "focus": "Problem-solution fit, scope alignment, user need coverage",
+      "phases_active": ["review"]
+    }
+  ],
   "safety_protocol": {
     "signals": [
-      {"signal": "BLOCK", "meaning": "Critical issue, halts progress", "action": "Facilitator resolves or backtracks"},
+      {"signal": "BLOCK", "meaning": "Critical issue, halts progress", "action": "Agents resolve internally; if unresolvable, convert to QUESTION"},
       {"signal": "CONCERN", "meaning": "Non-blocking risk", "action": "Log it and move on"},
-      {"signal": "CONSENT", "meaning": "Explicit endorsement", "action": "Required from all reviewers before phase gate"}
+      {"signal": "CONSENT", "meaning": "Explicit endorsement", "action": "Required from all reviewers before synthesizing"},
+      {"signal": "QUESTION", "meaning": "Needs user/customer input", "action": "Collect and present all at the end"}
     ]
   },
   "output": {
@@ -164,6 +204,44 @@
       "7. Testing & Validation Strategy (pyramid, CI gates, coverage)",
       "8. Consensus Record (agent sign-offs or documented dissent)",
       "9. Workshop Metadata"
+    ],
+    "checkpoints": [
+      {
+        "id": "requirements",
+        "after_phase": "p2",
+        "path": "docs/artifacts/{slug}-requirements.md",
+        "content": "User stories, functional/NFR requirements with MoSCoW, edge cases"
+      },
+      {
+        "id": "architecture-hld",
+        "after_phase": "p4",
+        "path": "docs/artifacts/{slug}-architecture-hld.md",
+        "content": "System diagram, component overview, data flow, API surface, technology choices"
+      },
+      {
+        "id": "architecture-lld",
+        "after_phase": "p5",
+        "path": "docs/artifacts/{slug}-architecture-lld.md",
+        "content": "Per-component interfaces, state machines, data schemas, dependency graph"
+      },
+      {
+        "id": "error-handling",
+        "after_phase": "p6",
+        "path": "docs/artifacts/{slug}-error-handling.md",
+        "content": "Failure modes, recovery strategies, observability plan, retry/fallback logic"
+      },
+      {
+        "id": "test-strategy",
+        "after_phase": "p7",
+        "path": "docs/artifacts/{slug}-test-strategy.md",
+        "content": "Test pyramid, CI gates, coverage matrix, sample test cases per critical path"
+      },
+      {
+        "id": "security-review",
+        "after_phase": "review",
+        "path": "docs/artifacts/{slug}-security-review.md",
+        "content": "Threat surfaces, auth/data gaps, compliance risks, mitigation recommendations (synthesized by Risk Reviewer)"
+      }
     ]
   },
   "tools": {
