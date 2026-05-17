@@ -183,6 +183,12 @@
       "name": "Product Reviewer",
       "focus": "Problem-solution fit, scope alignment, user need coverage",
       "phases_active": ["review"]
+    },
+    {
+      "id": "simplicity-reviewer",
+      "name": "Simplicity Reviewer (YAGNI)",
+      "focus": "Unnecessary abstractions, future-proofing bloat, features with no requirement trace, complexity that can be removed",
+      "phases_active": ["review"]
     }
   ],
   "safety_protocol": {

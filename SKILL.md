@@ -100,11 +100,12 @@ At key milestones, save standalone artifact files for human review. The workshop
 
 After P8 consensus and the final design doc is assembled, spawn a **fresh set of review agents** to critique the complete document:
 
-**Review Agent Roles** (pick 3-4):
+**Review Agent Roles** (pick 3-5):
 - **Architecture Reviewer** — Does the architecture hold together? Are there gaps or contradictions?
 - **Implementation Reviewer** — Can a developer actually build from this? What's unclear or underspecified?
 - **Risk Reviewer** — What could go wrong in production? What failure modes were missed? Also produces the Security Review checkpoint.
 - **Product Reviewer** — Does this actually solve the user's stated problem?
+- **Simplicity Reviewer (YAGNI)** — What can be removed? Are there unnecessary abstractions, future-proofing, or features that trace to no requirement?
 
 **Review Process:**
 1. Give each review agent the **complete** design doc (all 8 sections)

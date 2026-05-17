@@ -42,6 +42,14 @@ You are a **fresh reviewer** — you did NOT participate in creating this design
 - Are there missing features the user would obviously need?
 - Does the design match the user's constraints and success criteria?
 
+**Simplicity Reviewer (YAGNI):**
+- What can be removed without breaking the design?
+- Are there unnecessary abstraction layers? (e.g., 5 where 3 would suffice)
+- Is there future-proofing for scale or features not in the requirements?
+- Does every P5 component trace back to a P2 requirement? If not, flag it.
+- Are BLOCK fixes from prior iterations adding wrapper-on-wrapper cruft?
+- Could multiple components be collapsed into one simpler component?
+
 ### Output Format
 
 ```

@@ -129,11 +129,12 @@ QUESTION [section] — [specific question only the user/customer can answer]
 
 After P8 and the final design doc is assembled, spawn a **fresh set of review agents** to critique the complete document. These are separate from the design-phase agents — they see the doc with fresh eyes.
 
-**Review Agent Roles (pick 3-4):**
+**Review Agent Roles (pick 3-5):**
 - **Architecture Reviewer** — Does the architecture hold together? Are there gaps?
 - **Implementation Reviewer** — Can a developer actually build from this? What's unclear?
 - **Risk Reviewer** — What could go wrong in production? What was missed? Also produces the Security Review checkpoint.
 - **Product Reviewer** — Does this actually solve the user's problem?
+- **Simplicity Reviewer (YAGNI)** — What can be removed? Are there unnecessary abstractions, future-proofing, or features that trace to no requirement?
 
 **Review Process:**
 1. Give each review agent the FULL design doc

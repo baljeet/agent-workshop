@@ -195,6 +195,7 @@ Fresh eyes critique the complete document:
 | **Implementation Reviewer** | Buildability, clarity, missing details |
 | **Risk Reviewer** | Production failures, security gaps, operational risks |
 | **Product Reviewer** | Problem-solution fit, scope alignment |
+| **Simplicity Reviewer (YAGNI)** | Removability, unnecessary abstractions, bloat, requirement trace |
 
 ---
 
