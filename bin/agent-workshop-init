@@ -53,7 +53,9 @@ init_claude() {
     info "Claude Code will auto-load these instructions for this project."
     info "Say 'run a workshop for building X' to start."
     echo ""
-    info "To update when the workshop protocol changes: re-run 'agent-workshop init claude'"
+    info "To update when the workshop protocol changes: re-run the installer, then re-init"
+    info "  curl -fsSL https://raw.githubusercontent.com/baljeet/agent-workshop/main/install.sh | bash"
+    info "  agent-workshop init claude"
 }
 
 # Write Cursor rules  
@@ -86,7 +88,11 @@ You are **Facilitator + All Agent Roles**. Execute P1-P8 autonomously, then REVI
 
 ## Update
 
-Re-run \`agent-workshop init cursor\` after updating the workshop protocol.
+Re-run the installer then re-init:
+\`\`\`bash
+curl -fsSL https://raw.githubusercontent.com/baljeet/agent-workshop/main/install.sh | bash
+agent-workshop init cursor
+\`\`\`
 INSTRUCTIONS
 
     success "Created $target for Cursor"

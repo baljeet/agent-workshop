@@ -145,14 +145,15 @@ git clone https://github.com/baljeet/agent-workshop.git
 
 When the workshop protocol is updated (new version, bug fixes, prompt improvements):
 
-| Agent | Update Command |
-|-------|---------------|
-| **Claude Code** | `cd ~/.agent-workshop && git pull && cd - && agent-workshop init claude` |
-| **Cursor** | `cd ~/.agent-workshop && git pull && cd - && agent-workshop init cursor` |
-| **Pi** | `cd ~/.agents/skills/agent-workshop && git pull` (auto-loaded, no re-init needed) |
-| **Generic** | `cd ~/.agent-workshop && git pull && cd - && agent-workshop init generic` |
+```bash
+# Re-run the installer — it auto-detects existing installs and does git pull
+curl -fsSL https://raw.githubusercontent.com/baljeet/agent-workshop/main/install.sh | bash
 
-The `init` script now copies the actual `CLAUDE.md`/`SKILL.md` from the install directory — no stale embedded copies. Just pull the latest and re-init.
+# Then re-init in your project (copies the updated CLAUDE.md/SKILL.md)
+agent-workshop init claude    # or cursor, pi, generic
+```
+
+Pi users: if you cloned directly to `~/.agents/skills/agent-workshop`, just `cd` there and `git pull`. No re-init needed since Pi auto-loads.
 
 ---
 
