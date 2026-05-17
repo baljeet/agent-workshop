@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # agent-workshop — CLI for Multi-Agent Design Workshop
-# https://github.com/baljeet/pi-multi-agent-design-workshop
+# https://github.com/baljeet/agent-workshop
 #
 # Usage: agent-workshop <command> [options]
 #

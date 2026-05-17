@@ -123,5 +123,5 @@ bash {{WORKSHOP_DIR}}/scripts/check-readiness.sh docs/plans/YYYY-MM-DD-[slug]-de
 This protocol reads from a local workshop repo. The `WORKSHOP_DIR` is auto-detected.
 If you cannot find the workshop files, ask the user to install them via:
 ```bash
-curl -fsSL https://raw.githubusercontent.com/baljeet/pi-multi-agent-design-workshop/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/baljeet/agent-workshop/main/install.sh | bash
 ```

@@ -25,7 +25,7 @@ Zero copy-paste. The AI orchestrates the entire workshop.
 ### 1. Install the Toolkit
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/baljeet/pi-multi-agent-design-workshop/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/baljeet/agent-workshop/main/install.sh | bash
 ```
 
 This adds:
@@ -61,7 +61,7 @@ Your agent reads the instructions file, loads the manifest, and executes all 8 p
 
 | Agent | File | Auto-Loaded? | Setup |
 |-------|------|-------------|-------|
-| **Pi** | `~/.agents/skills/pi-multi-agent-design-workshop/SKILL.md` | ✅ Yes | Clone to skills dir |
+| **Pi** | `~/.agents/skills/agent-workshop/SKILL.md` | ✅ Yes | Clone to skills dir |
 | **Claude Code** | `.claude/CLAUDE.md` | ✅ Yes, per project | `agent-workshop init claude` |
 | **Cursor** | `.cursor/rules.md` | ✅ Yes, per project | `agent-workshop init cursor` |
 | **Generic** | `WORKSHOP.md` | ❌ Paste into context | `agent-workshop init generic` |
@@ -70,7 +70,7 @@ Your agent reads the instructions file, loads the manifest, and executes all 8 p
 
 ```bash
 cd ~/.agents/skills/
-git clone https://github.com/baljeet/pi-multi-agent-design-workshop.git
+git clone https://github.com/baljeet/agent-workshop.git
 ```
 
 Pi auto-detects `SKILL.md`. Just say: "Run a multi-agent design workshop for..."

@@ -162,7 +162,7 @@ bash "$WORKSHOP_DIR/scripts/check-readiness.sh" docs/plans/YYYY-MM-DD-[slug]-des
 
 If workshop files are missing, the user can install them with:
 ```bash
-curl -fsSL https://raw.githubusercontent.com/baljeet/pi-multi-agent-design-workshop/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/baljeet/agent-workshop/main/install.sh | bash
 ```
 
 The default WORKSHOP_DIR is `$HOME/.agent-workshop`.
@@ -254,7 +254,7 @@ Validate with `bash "$WORKSHOP_DIR/scripts/check-readiness.sh" <doc.md>`.
 
 ## Install
 ```bash
-curl -fsSL https://raw.githubusercontent.com/baljeet/pi-multi-agent-design-workshop/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/baljeet/agent-workshop/main/install.sh | bash
 ```
 INSTRUCTIONS
 
@@ -280,7 +280,7 @@ main() {
             ;;
         pi)
             info "Pi auto-detects SKILL.md. No init needed if repo is in ~/.agents/skills/"
-            info "Or run: ln -s $(realpath "$REPO_ROOT") ~/.agents/skills/pi-multi-agent-design-workshop"
+            info "Or run: ln -s $(realpath "$REPO_ROOT") ~/.agents/skills/agent-workshop"
             ;;
         codex|openai)
             init_generic
