@@ -4,7 +4,7 @@
 >
 > An 8-phase structured design protocol that runs *inside* your coding agent. The AI reads the manifest, adopts multiple expert roles, debates trade-offs, and produces a design doc any developer can implement from.
 
-[![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.4.0-blue.svg)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 ## The Problem

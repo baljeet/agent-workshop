@@ -120,15 +120,48 @@ INSTRUCTIONS:
 - For each edge case: describe the scenario and expected behavior
 - Do NOT design solutions. Extract what the system MUST do.
 
+**Requirement Format:**
+Each functional requirement may be written as:
+1. **MoSCoW table entry** (default, for simple requirements)
+2. **User Story + EARS acceptance criteria** (recommended for behavioral requirements)
+
+User Story format: *"As a [role], I want [feature], so that [benefit]"*
+
+EARS (Easy Approach to Requirements Syntax): unambiguous, testable acceptance criteria
+- `WHEN [event] THEN [system] SHALL [response]` — stimulus triggers response
+- `IF [precondition] THEN [system] SHALL [response]` — guard condition
+- `WHEN [event] AND [condition] THEN [system] SHALL [response]` — stimulus with guard
+- `WHILE [state] THEN [system] SHALL [response]` — continuous behavior
+
+Use User Story + EARS for user-facing features. Use MoSCoW tables for technical constraints.
+
 ## INPUT / CONTEXT
 APPROVED PROBLEM STATEMENT (P1):
 {{P1_ARTIFACT}}
 
 ## OUTPUT FORMAT
 ### Functional Requirements
+
+**Option A: MoSCoW Table (for well-understood, atomic requirements)**
+
 | ID | Requirement | MoSCoW | Notes |
 |----|-------------|--------|-------|
 | R1 | [description] | Must | |
+
+**Option B: User Story + EARS (for behavioral / user-facing requirements)**
+
+```
+### R1: [Short Feature Name]
+**User Story:** As a [role], I want [feature], so that [benefit]
+
+**Acceptance Criteria (EARS):**
+1. WHEN [event] THEN [system] SHALL [response]
+2. IF [precondition] THEN [system] SHALL [response]
+
+**MoSCoW:** Must | **Notes:** [any constraints]
+```
+
+Use Option B for user-facing features. Use Option A for technical constraints.
 
 ### Non-Functional Requirements
 | ID | Requirement | Target | MoSCoW |
@@ -168,6 +201,7 @@ APPROVED PROBLEM STATEMENT (P1):
 ROLE: {{ASSIGNED_ROLE}}
 INSTRUCTIONS:
 - Propose 2-3 distinct architectural approaches to meet ALL Must-have requirements
+- **Before proposing, research:** existing solutions, patterns, and constraints relevant to the domain. Cite any sources or precedents you reference.
 - For each approach: describe it, list pros/cons, identify risks
 - Debate the approaches: challenge other agents' proposals constructively
 - Consider: complexity, maintainability, scalability, team expertise, time to market
@@ -661,6 +695,37 @@ COMPLETE DESIGN DOCUMENT:
 ### FINAL CONSENT / DISSENT
 - I CONSENT to this design as finalized
 - OR: I DISSENT on [section] for [reason]. I accept the facilitator's decision to proceed with documented dissent.
+
+---
+
+### OPTIONAL: Phase 8b — Implementation Handoff
+
+After consensus is reached and the design is locked, if the user requests, generate an implementation task list:
+
+```markdown
+## 9. Implementation Task List (Optional)
+
+Convert the design into a series of prompts for a code-generation agent.
+Prioritize best practices, incremental progress, and early testing.
+Each task builds on previous tasks. No hanging/orphaned code.
+
+### Tasks
+1. [ ] [Concrete coding task — e.g., "Implement User model with validation"]
+   - References: R1, R2 (requirements)
+   - Files: src/models/user.ts, src/models/user.test.ts
+   - Acceptance: tests pass, typecheck passes
+
+2. [ ] [Next task that depends on previous]
+   ...
+```
+
+Task rules:
+- Each task is a concrete coding action (write, modify, or test code)
+- Specify files/components to create or modify
+- Reference specific requirements from P2
+- Avoid non-coding tasks: UAT, deployment, performance analysis, user training
+- Prioritize test-driven development where appropriate
+- Sequence to validate core functionality early
 ```
 
 ---

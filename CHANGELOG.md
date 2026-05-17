@@ -7,7 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.3.0] — 2026-05-17
+## [1.4.0] - 2026-05-17
+
+### Added (from external research: Devin, Kiro, Manus, Cursor agent prompts)
+- **P2 — User Story + EARS format** for requirements
+  - User Story: "As a [role], I want [feature], so that [benefit]"
+  - EARS (Easy Approach to Requirements Syntax): unambiguous, testable acceptance criteria
+    - `WHEN [event] THEN [system] SHALL [response]`
+    - `IF [precondition] THEN [system] SHALL [response]`
+    - `WHEN [event] AND [condition] THEN [system] SHALL [response]`
+    - `WHILE [state] THEN [system] SHALL [response]`
+  - Maintains MoSCoW as Option A; User Story + EARS as Option B
+- **P3 — Research step before architecture selection**
+  - Agents must research existing solutions, patterns, constraints before proposing architectures
+  - Must cite sources and precedents
+- **P3 & BLOCK — Reasoning checkpoints (from Devin think tool)**
+  - Before architecture selection: explicit trade-off analysis
+  - Before BLOCK resolution: explicit analysis of fix paths and chosen resolution
+- **Explicit backtracking protocol** with cross-phase consistency guard
+  - Document BLOCK with section ID and reason
+  - Assessment: fix in current phase, backtrack to earlier phase, or override
+  - If later phase contradicts earlier: BLOCK, reference earlier artifact, fix or document override
+  - Cascade changes forward through all affected phases
+- **P8b — Optional implementation handoff** (from Kiro spec workflow)
+  - After consensus, generate `tasks.md` with numbered checkboxes
+  - Each task is a concrete coding action with references to requirements
+  - Tasks prioritized for incremental validation (TDD where appropriate)
+  - Excludes non-coding tasks: UAT, deployment, performance analysis, training
+- **Agent parallelism note** (from Cursor)
+  - When loading prior phase artifacts for synthesis, load all at once for efficiency
+
+### Changed
+- Updated `docs/protocol.md` with expanded requirements (R9-R12) and facilitator state machine
+- Updated `docs/prompts/template-library.md` with P2 dual-format, P3 research, P8b handoff sections
+- Updated `SKILL.md` with reasoning checkpoint rules and P2/P8 guidance
+
+---
 
 ### Added
 - **`workshop-manifest.json`** — Machine-readable phase/role/prompt metadata that the AI reads to auto-execute the protocol

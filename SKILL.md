@@ -140,6 +140,7 @@ Every agent response must end with one signal:
 - You may resolve the BLOCK by fixing the issue, or you may OVERRIDE with documented rationale
 - Every reviewer must provide CONSENT before you ask the user for phase approval
 - "Looks good to me" does NOT count — force at least one critique or concern
+- **When resolving BLOCKs:** explicitly reason through alternatives, fix paths, and why the chosen resolution is correct
 
 ## Agent Role Prompts
 
@@ -169,13 +170,17 @@ Load the charter from `docs/prompts/workshop-charter.md`, the prompt body from t
 
 ### P2: Requirements
 - Use MoSCoW (Must have / Should have / Could have / Won't have)
+- **Each requirement may include a User Story** ("As a [role], I want [feature], so that [benefit]")
+- **Acceptance criteria may use EARS format** (unambiguous, testable)
 - Identify functional requirements as R1, R2, ...
 - Identify non-function requirements as NFR1, NFR2, ...
 - List edge cases explicitly
 
 ### P3: Approach Debate
 - You (as Design Author) propose 2-3 architectures
+- **Before proposing, research:** existing solutions, patterns, and constraints. Cite sources.
 - Each other role critiques and votes
+- **Before selecting:** explicitly reason through trade-offs, risks, and why the selected approach dominates
 - You synthesize and SELECT one approach with justification
 
 ### P4-P7: Author/Reviewers
@@ -188,6 +193,7 @@ Load the charter from `docs/prompts/workshop-charter.md`, the prompt body from t
 - Each role either CONSENTS or registers DISSENT
 - Document any dissent with rationale
 - Lock the design document — no changes after P8 without new workshop cycle
+- **Optional:** Generate an implementation task list (Phase 8b) if user requests it
 
 ## Output Requirements
 

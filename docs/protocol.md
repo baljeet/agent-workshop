@@ -44,6 +44,10 @@ Create a reusable protocol that enables multiple AI assistants (Pi, Claude Code,
 | R6 | Support both roundtable (diverge) and author/reviewer (converge) modes | Must |
 | R7 | Include backtracking mechanism when objections are raised | Should |
 | R8 | Provide example rendered prompts for reference | Should |
+| R9 | Support EARS + user story format for requirements (optional) | Should |
+| R10 | Include research step before architecture selection | Should |
+| R11 | Require reasoning checkpoints before critical decisions | Should |
+| R12 | Support optional implementation handoff after consensus | Could |
 
 ### Non-Functional Requirements
 
@@ -218,6 +222,29 @@ P8 ──[APPROVED]──► FINALIZED                                        �
 - Only forward transitions on explicit facilitator approval
 - BLOCK forces backward transition to previous phase
 - Facilitator can override BLOCK with documented rationale
+
+**Explicit Backtracking Protocol:**
+```
+1. BLOCK received: Document the BLOCK with section ID and reason
+2. Facilitator assessment: Is this valid? Does it apply to current or earlier phase?
+3. Resolution paths:
+   a. Fix in current phase → revise and re-submit for approval
+   b. Root cause in earlier phase → backtrack to that phase with reference
+   c. Invalid / acceptable risk → OVERRIDE with documented rationale
+4. After resolution: Re-run CONSENT check on affected agents before proceeding
+```
+
+**Cross-Phase Consistency Guard:**
+If a later phase (e.g., P5) contradicts an earlier phase (e.g., P3), you MUST:
+1. BLOCK in the later phase
+2. Reference the specific earlier artifact that is contradicted
+3. Backtrack and amend the earlier phase, OR document the intentional override
+4. Cascade any changes forward through all affected phases
+
+**Reasoning Checkpoints (Required):**
+The facilitator must explicitly reason through alternatives before:
+- **Architecture selection (P3):** Draft a brief analysis of trade-offs, risks, and why the selected approach dominates
+- **BLOCK resolution:** Draft a brief analysis of the BLOCK, proposed fixes, and why the chosen resolution path is correct
 
 ## 6. Error Handling & Edge Cases (P6)
 
