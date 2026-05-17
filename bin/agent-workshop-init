@@ -5,7 +5,7 @@
 # Detects the coding agent being used and creates the right instruction file
 # so the agent automatically knows how to run workshops.
 #
-# Usage: agent-workshop-init [--agent pi|claude|cursor|codex|generic]
+# Usage: agent-workshop-init [claude|cursor|pi|generic]
 
 set -euo pipefail
 
@@ -25,203 +25,68 @@ success() { echo -e "${GREEN}✓${NC}  $1"; }
 warn()    { echo -e "${YELLOW}⚠${NC}  $1"; }
 error()   { echo -e "${RED}✗${NC}  $1"; }
 
-# Detect agent from environment
-detect_agent() {
-    if [[ -n "${CLAUDE_CODE:-}" ]] || [[ -n "${ANTHROPIC_API_KEY:-}" ]] || command -v claude &>/dev/null; then
-        echo "claude"
-        return
+# Resolve workshop install directory
+resolve_workshop_dir() {
+    if [[ -n "${WORKSHOP_DIR:-}" ]] && [[ -d "$WORKSHOP_DIR" ]]; then
+        echo "$WORKSHOP_DIR"
+    elif [[ -d "$HOME/.agent-workshop" ]]; then
+        echo "$HOME/.agent-workshop"
+    elif [[ -d "$REPO_ROOT" ]] && [[ -f "$REPO_ROOT/workshop-manifest.json" ]]; then
+        echo "$REPO_ROOT"
+    else
+        echo ""
     fi
-    if [[ -d ".cursor" ]] || [[ -f ".cursorrules" ]] || [[ -n "${CURSOR_AGENT:-}" ]]; then
-        echo "cursor"
-        return
-    fi
-    if [[ -n "${CODEX_AGENT:-}" ]] || [[ -d ".codex" ]]; then
-        echo "codex"
-        return
-    fi
-    if [[ -d ".pi" ]] || [[ -n "${PI_AGENT:-}" ]]; then
-        echo "pi"
-        return
-    fi
-    echo "generic"
 }
 
 # Write Claude Code instructions
 init_claude() {
-    local target=".claude/CLAUDE.md"
-    mkdir -p ".claude"
-    
-    cat > "$target" << 'INSTRUCTIONS'
-# Multi-Agent Design Workshop — Project Instructions
+    local workshop_dir="$1"
+    local target="CLAUDE.md"
 
-## Activation
+    if [[ ! -f "$workshop_dir/CLAUDE.md" ]]; then
+        error "CLAUDE.md not found in $workshop_dir. Is agent-workshop installed?"
+        exit 1
+    fi
 
-When the user says anything like **"run a workshop"**, **"design a workshop for X"**, **"let's do a design workshop"**, **"multi-agent design"**, or **"plan this with a workshop"**, execute the multi-agent design workshop protocol below.
-
-## Protocol
-
-### Step 1: Load Resources
-
-Run these commands to load the workshop protocol (adjust WORKSHOP_DIR if installed elsewhere):
-
-```bash
-WORKSHOP_DIR="${WORKSHOP_DIR:-$HOME/.agent-workshop}"
-cat "$WORKSHOP_DIR/workshop-manifest.json"
-cat "$WORKSHOP_DIR/docs/protocol.md"
-cat "$WORKSHOP_DIR/docs/prompts/workshop-charter.md"
-cat "$WORKSHOP_DIR/SKILL.md"
-```
-
-### Step 2: Execute 8-Phase Workshop
-
-You are the **Facilitator** AND the **entire agent team**.
-
-#### Roles (adopt 5-7 per phase)
-- **Design Author** — Architecture, interfaces, data flow, components
-- **Product Critic** — User needs, scope creep, UX gaps  
-- **Security Engineer** — Threat surfaces, auth gaps, data exposure
-- **Scalability Engineer** — Bottlenecks, resource limits, SPOFs
-- **QA/Testing Lead** — Testability, observability, coverage
-- **Integration Specialist** — API consistency, third-party failures
-- **DevEx Advocate** — Build experience, onboarding, documentation
-
-#### Phase Execution
-For each phase:
-1. Read the prompt file from the manifest for this phase
-2. Substitute all {{VARIABLES}} with actual context from prior phases
-3. Generate role responses (each must have a critique + BLOCK/CONCERN/CONSENT)
-4. Synthesize all responses into one phase artifact
-5. Present to user: "P[N] COMPLETE. Does this look right? APPROVED to proceed?"
-6. WAIT for user approval before next phase
-
-#### Phases
-| Phase | Name | Mode | Key Output |
-|-------|------|------|-----------|
-| P1 | Problem Framing | Roundtable | Problem, constraints, success criteria, anti-requirements |
-| P2 | Requirements | Roundtable | MoSCoW requirements (R1, R2..., NFR1...), edge cases |
-| P3 | Approach Debate | Roundtable | 2-3 architectures with trade-offs, selected approach |
-| P4 | System Architecture | Author+Reviewers | Components, data flow, APIs with reviewer feedback |
-| P5 | Component Design | Author+Reviewers | Per-component: interfaces, state, dependencies |
-| P6 | Error Handling | Author+Reviewers | Failure matrix, recovery, observability |
-| P7 | Testing Strategy | Author+Reviewers | Test pyramid, CI gates, coverage matrix |
-| P8 | Consensus | Roundtable | All agent sign-offs (CONSENT or documented DISSENT) |
-
-#### Variable Substitution
-Replace {{KEY}} patterns with actual values. Common variables:
-- {{PROJECT_NAME}}, {{USER_INTENT_TEXT}}, {{ASSIGNED_ROLE}}
-- {{P1_ARTIFACT}}, {{P2_REQUIREMENTS}}, {{P3_SELECTED_APPROACH}}
-- {{P4_ARCHITECTURE}}, {{P5_COMPONENTS}}, {{P6_ERRORS}}
-- {{FULL_DESIGN_DOC}} — all prior artifacts concatenated
-
-**RULE: Never leave raw {{VARIABLES}} in generated output.**
-
-#### Safety Signals
-Every role response MUST end with exactly one:
-```
-BLOCK [section] — [showstopper reason]
-CONCERN [section] — [non-blocking risk]
-CONSENT [section] — [role name]
-```
-
-BLOCK = halt and resolve. CONCERN = log and continue. CONSENT = all reviewers must provide before phase gate.
-
-### Step 3: Assemble & Validate
-
-After P8, create the final design document:
-
-```markdown
-# Design Document — [Project]
-
-## 0. Workshop Metadata
-## 1. Problem Statement
-## 2. Requirements
-## 3. Selected Approach
-## 4. System Architecture
-## 5. Component Design
-## 6. Error Handling & Edge Cases
-## 7. Testing & Validation Strategy
-## 8. Consensus Record
-```
-
-Save to `docs/plans/YYYY-MM-DD-[slug]-design.md`.
-
-Validate with:
-```bash
-bash "$WORKSHOP_DIR/scripts/check-readiness.sh" docs/plans/YYYY-MM-DD-[slug]-design.md
-```
-
-### Anti-Patterns
-- ❌ Skip phases (P1 → P4)
-- ❌ "This is clear" without finding ambiguity
-- ❌ "Looks good" without critique
-- ❌ Proceed without user approval
-- ❌ Leave {{VARIABLES}} unsubstantiated
-- ❌ Propose solutions in P1
-
-## Cross-Agent Notes
-
-If workshop files are missing, the user can install them with:
-```bash
-curl -fsSL https://raw.githubusercontent.com/baljeet/agent-workshop/main/install.sh | bash
-```
-
-The default WORKSHOP_DIR is `$HOME/.agent-workshop`.
-INSTRUCTIONS
-
-    success "Created $target for Claude Code"
+    cp "$workshop_dir/CLAUDE.md" "$target"
+    success "Copied CLAUDE.md from $workshop_dir → ./CLAUDE.md"
     info "Claude Code will auto-load these instructions for this project."
-    info "Say 'run a workshop for building X' and Claude will execute P1-P8."
+    info "Say 'run a workshop for building X' to start."
+    echo ""
+    info "To update when the workshop protocol changes: re-run 'agent-workshop init claude'"
 }
 
 # Write Cursor rules  
 init_cursor() {
+    local workshop_dir="$1"
     local target=".cursor/rules.md"
     mkdir -p ".cursor"
-    
-    cat > "$target" << 'INSTRUCTIONS'
-# Multi-Agent Design Workshop Rules
 
-When the user says anything like **"run a workshop"**, **"design a workshop for X"**, **"let's do a design workshop"**, or **"multi-agent design"**, follow this protocol.
+    # Cursor rules: reference the workshop install, let the agent load from there
+    cat > "$target" << INSTRUCTIONS
+# Multi-Agent Design Workshop — Cursor Rules
+
+When the user says **"run a workshop"**, **"design a workshop"**, or **"multi-agent design"**, follow this protocol.
 
 ## Setup
 
-Load workshop resources from the installed repo:
+Read the workshop instructions from the installed repo:
 
-```bash
+\`\`\`bash
 WORKSHOP_DIR="${WORKSHOP_DIR:-$HOME/.agent-workshop}"
-cat "$WORKSHOP_DIR/workshop-manifest.json"
-cat "$WORKSHOP_DIR/docs/protocol.md"
-cat "$WORKSHOP_DIR/SKILL.md"
-```
+cat "\$WORKSHOP_DIR/workshop-manifest.json"
+cat "\$WORKSHOP_DIR/docs/protocol.md"
+cat "\$WORKSHOP_DIR/docs/prompts/workshop-charter.md"
+cat "\$WORKSHOP_DIR/SKILL.md"   # Full facilitation guide
+\`\`\`
 
-## Protocol
+## Execution
 
-You are **Facilitator + All Agent Roles**. Run P1-P8.
+You are **Facilitator + All Agent Roles**. Execute P1-P8 autonomously, then REVIEW agents. See SKILL.md for the complete guide. The workshop runs fully autonomous — present everything to the user once at the end.
 
-### Agent Roles
-- Design Author, Product Critic, Security Engineer, Scalability Engineer, QA Lead, Integration Specialist, DevEx Advocate
+## Update
 
-### Per Phase
-1. Read prompt from manifest
-2. Substitute {{VARIABLES}} with prior phase context
-3. Generate 5-7 role responses (each needs critique + BLOCK/CONCERN/CONSENT)
-4. Synthesize into one artifact
-5. Present to user and WAIT for "APPROVED"
-6. Proceed to next phase
-
-### Final Output
-Save design document to `docs/plans/YYYY-MM-DD-[slug]-design.md`:
-- 0. Workshop Metadata
-- 1. Problem Statement
-- 2. Requirements
-- 3. Selected Approach
-- 4. System Architecture
-- 5. Component Design
-- 6. Error Handling & Edge Cases
-- 7. Testing & Validation Strategy
-- 8. Consensus Record
-
-Validate with: `bash "$WORKSHOP_DIR/scripts/check-readiness.sh" <doc.md>`
+Re-run \`agent-workshop init cursor\` after updating the workshop protocol.
 INSTRUCTIONS
 
     success "Created $target for Cursor"
@@ -230,35 +95,11 @@ INSTRUCTIONS
 
 # Write generic instructions
 init_generic() {
+    local workshop_dir="$1"
     local target="WORKSHOP.md"
-    
-    cat > "$target" << 'INSTRUCTIONS'
-# Multi-Agent Design Workshop Protocol
 
-## Activation
-When the user says "run a workshop for X", execute this protocol.
-
-## Setup
-```bash
-WORKSHOP_DIR="${WORKSHOP_DIR:-$HOME/.agent-workshop}"
-cat "$WORKSHOP_DIR/workshop-manifest.json"  # phases, roles, prompts
-cat "$WORKSHOP_DIR/docs/protocol.md"        # rules
-cat "$WORKSHOP_DIR/SKILL.md"                # full guide
-```
-
-## Execution
-You are Facilitator + All Roles. Run P1-P8, gating each phase with user approval.
-
-Save final design doc to `docs/plans/YYYY-MM-DD-[slug]-design.md`.
-Validate with `bash "$WORKSHOP_DIR/scripts/check-readiness.sh" <doc.md>`.
-
-## Install
-```bash
-curl -fsSL https://raw.githubusercontent.com/baljeet/agent-workshop/main/install.sh | bash
-```
-INSTRUCTIONS
-
-    success "Created $target"
+    cp "$workshop_dir/SKILL.md" "$target"
+    success "Copied SKILL.md from $workshop_dir → ./WORKSHOP.md"
     info "Include this file in your agent's context to activate the workshop protocol."
 }
 
@@ -266,28 +107,46 @@ INSTRUCTIONS
 main() {
     local agent="${1:-auto}"
     
+    # Auto-detect
     if [[ "$agent" == "auto" ]] || [[ "$agent" == "--detect" ]]; then
-        agent=$(detect_agent)
+        if [[ -n "${CLAUDE_CODE:-}" ]] || [[ -n "${ANTHROPIC_API_KEY:-}" ]] || command -v claude &>/dev/null; then
+            agent="claude"
+        elif [[ -d ".cursor" ]] || [[ -f ".cursorrules" ]] || [[ -n "${CURSOR_AGENT:-}" ]]; then
+            agent="cursor"
+        elif [[ -d ".pi" ]] || [[ -n "${PI_AGENT:-}" ]]; then
+            agent="pi"
+        elif [[ -n "${CODEX_AGENT:-}" ]] || [[ -d ".codex" ]]; then
+            agent="generic"
+        else
+            agent="generic"
+        fi
         info "Detected agent: $agent"
     fi
-    
+
+    # Resolve workshop directory
+    local workshop_dir
+    workshop_dir=$(resolve_workshop_dir)
+    if [[ -z "$workshop_dir" ]]; then
+        error "Workshop not found. Install first:"
+        echo "  curl -fsSL https://raw.githubusercontent.com/baljeet/agent-workshop/main/install.sh | bash"
+        exit 1
+    fi
+    info "Workshop source: $workshop_dir"
+
     case "$agent" in
         claude|claude-code|anthropic)
-            init_claude
+            init_claude "$workshop_dir"
             ;;
         cursor)
-            init_cursor
+            init_cursor "$workshop_dir"
             ;;
         pi)
-            info "Pi auto-detects SKILL.md. No init needed if repo is in ~/.agents/skills/"
-            info "Or run: ln -s $(realpath "$REPO_ROOT") ~/.agents/skills/agent-workshop"
+            info "Pi auto-detects SKILL.md. No init file needed."
+            info "Ensure workshop is in ~/.agents/skills/agent-workshop/"
+            info "To update: cd ~/.agents/skills/agent-workshop && git pull"
             ;;
-        codex|openai)
-            init_generic
-            warn "Codex doesn't have a standard instructions file. Use the generated WORKSHOP.md"
-            ;;
-        generic|default|*)
-            init_generic
+        codex|openai|generic|default|*)
+            init_generic "$workshop_dir"
             ;;
     esac
     

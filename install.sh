@@ -9,7 +9,7 @@ set -euo pipefail
 REPO_URL="https://github.com/baljeet/agent-workshop"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.agent-workshop}"
 BIN_DIR="${BIN_DIR:-$HOME/.local/bin}"
-VERSION="1.3.0"
+VERSION="2.0.0"
 
 # Colors
 RED='\033[0;31m'

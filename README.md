@@ -141,6 +141,19 @@ git clone https://github.com/baljeet/agent-workshop.git
 # Then: "Run a multi-agent design workshop for..."
 ```
 
+### Updating the Workshop
+
+When the workshop protocol is updated (new version, bug fixes, prompt improvements):
+
+| Agent | Update Command |
+|-------|---------------|
+| **Claude Code** | `cd ~/.agent-workshop && git pull && cd - && agent-workshop init claude` |
+| **Cursor** | `cd ~/.agent-workshop && git pull && cd - && agent-workshop init cursor` |
+| **Pi** | `cd ~/.agents/skills/agent-workshop && git pull` (auto-loaded, no re-init needed) |
+| **Generic** | `cd ~/.agent-workshop && git pull && cd - && agent-workshop init generic` |
+
+The `init` script now copies the actual `CLAUDE.md`/`SKILL.md` from the install directory — no stale embedded copies. Just pull the latest and re-init.
+
 ---
 
 ## The Phases
