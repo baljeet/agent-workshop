@@ -1,122 +1,187 @@
-# Multi-Agent Design Workshop
+# Agent Workshop
 
-> A **protocol + tooling** for running structured 8-phase design workshops inside coding agents (Pi, Claude Code, Cursor, Codex, or any LLM that reads files). The AI reads the manifest, adopts multiple agent roles, and produces production-ready design documents.
+> **Turn "I want to build X" into a production-ready design document — without copy-pasting prompts or managing phases manually.**
+>
+> An 8-phase structured design protocol that runs *inside* your coding agent. The AI reads the manifest, adopts multiple expert roles, debates trade-offs, and produces a design doc any developer can implement from.
 
 [![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-## What This Does
+## The Problem
 
-When the user says **"run a workshop for building X,"** the AI:
+You have an idea. You ask your AI to design it. You get one perspective, miss security holes, overlook scalability limits, and end up with a half-baked plan that breaks in production.
 
-1. **Reads** `workshop-manifest.json` — discovers 8 phases, 7 roles, prompt file paths
-2. **Reads** `docs/protocol.md` — learns BLOCK/CONSENT/CONCERN rules
-3. **Reads** `docs/prompts/workshop-charter.md` — loads charter context
-4. **Reads** role-specific prompts — loads the phase prompt for each role
-5. **Executes P1-P8** — generates multi-role responses, synthesizes, gates with user
-6. **Outputs** a `docs/plans/YYYY-MM-DD-<slug>-design.md`
+**Agent Workshop fixes this** by making your AI *run a structured design workshop with itself* — adopting 5-7 specialized roles (security, scalability, product, QA) across 8 rigorously gated phases. Every phase requires critique. Every objection gets resolved before you proceed.
 
-Zero copy-paste. The AI orchestrates the entire workshop.
+**You say:** "Design a real-time collaborative todo app."
+
+**The AI does:**
+1. P1: Frames the problem with constraints and anti-requirements
+2. P2: Extracts requirements with MoSCoW prioritization
+3. P3: Debates 2-3 architectures, picks one with justification
+4. P4: Designs system architecture with reviewer challenges
+5. P5: Designs every component's interface, state, dependencies
+6. P6: Maps every failure mode and recovery path
+7. P7: Builds the testing pyramid and CI gates
+8. P8: Locks the design with signed consensus (or documented dissent)
+
+**You get:** A single markdown document a developer with zero context can implement — tested and validated.
 
 ---
 
 ## Quick Start
 
-### 1. Install the Toolkit
-
 ```bash
+# 1. Install
 curl -fsSL https://raw.githubusercontent.com/baljeet/agent-workshop/main/install.sh | bash
+
+# 2. In your project, tell your agent how to run workshops
+agent-workshop init claude    # or: cursor, pi, generic
+
+# 3. Say: "Run a workshop for building a real-time collaborative todo app"
+# The AI does P1-P8. You approve each phase. Done.
 ```
 
-This adds:
-- `agent-workshop` — CLI for inspecting prompts, validating documents, checking manifests
-- `agent-workshop-init` — Sets up agent-specific instruction files in your projects
-- The workshop repo at `~/.agent-workshop/`
+---
 
-### 2. Initialize Your Project
+## How It Works
 
-In any project where you want to run workshops:
+### For You (The Human)
 
-```bash
-# Auto-detect your agent and create the right instruction file
-agent-workshop init
+| You say | You get |
+|---------|---------|
+| "Run a workshop for building X" | AI loads the protocol and starts P1 |
+| "Looks good, approved" | AI proceeds to P2 |
+| "Wait, we need auth" | AI backtracks, updates P1, re-presents |
+| (repeat for 8 phases) | A validated design document |
 
-# Or specify explicitly
-agent-workshop init claude     # → creates .claude/CLAUDE.md
-agent-workshop init cursor     # → creates .cursor/rules.md
-agent-workshop init pi         # → links to ~/.agents/skills/
+Your job: **Provide intent, approve phases, catch anything the AI misses.**
+
+### For The AI
+
+The AI reads `workshop-manifest.json`, discovers 8 phases and 7 roles, then executes:
+
+```
+For each phase:
+  Load prompt → Substitute variables → Generate 5-7 role responses
+  → Synthesize into artifact → Present to you → Wait for APPROVED
 ```
 
-### 3. Run a Workshop
+Every role response must include a critique and a safety signal:
+- **BLOCK** — showstopper, halt and resolve
+- **CONCERN** — risk, log and continue  
+- **CONSENT** — explicit endorsement, required from all reviewers
 
-Just say:
+### The Output
 
-> **"Run a workshop for building a real-time collaborative todo app"**
+A single file: `docs/plans/2024-01-15-todo-app-design.md`
 
-Your agent reads the instructions file, loads the manifest, and executes all 8 phases. You'll approve each phase before it proceeds to the next.
+```markdown
+# Design Document — Real-Time Collaborative Todo App
+
+## 1. Problem Statement
+## 2. Requirements (R1-R12, NFR1-NFR5, MoSCoW)
+## 3. Selected Approach (with rejected alternatives)
+## 4. System Architecture (diagrams, data flow, APIs)
+## 5. Component Design (interfaces, state, dependencies)
+## 6. Error Handling & Edge Cases (failure matrix, recovery)
+## 7. Testing & Validation Strategy (pyramid, CI gates, coverage)
+## 8. Consensus Record (who signed off, who dissented, why)
+```
+
+Validated by `scripts/check-readiness.sh` before you ever write code.
 
 ---
 
 ## Per-Agent Setup
 
-| Agent | File | Auto-Loaded? | Setup |
-|-------|------|-------------|-------|
-| **Pi** | `~/.agents/skills/agent-workshop/SKILL.md` | ✅ Yes | Clone to skills dir |
-| **Claude Code** | `.claude/CLAUDE.md` | ✅ Yes, per project | `agent-workshop init claude` |
-| **Cursor** | `.cursor/rules.md` | ✅ Yes, per project | `agent-workshop init cursor` |
-| **Generic** | `WORKSHOP.md` | ❌ Paste into context | `agent-workshop init generic` |
+Different agents load instructions differently. `agent-workshop init` auto-detects and creates the right file.
 
-### Pi
+| Agent | Setup | Trigger |
+|-------|-------|---------|
+| **Pi** | `git clone` to `~/.agents/skills/` | Auto-loads `SKILL.md` |
+| **Claude Code** | `agent-workshop init claude` → `.claude/CLAUDE.md` | Say "run a workshop" |
+| **Cursor** | `agent-workshop init cursor` → `.cursor/rules.md` | Say "design workshop" |
+| **Generic** | `agent-workshop init generic` → `WORKSHOP.md` | Paste into context |
 
 ```bash
+# Pi
 cd ~/.agents/skills/
 git clone https://github.com/baljeet/agent-workshop.git
-```
+# Then: "Run a multi-agent design workshop for..."
 
-Pi auto-detects `SKILL.md`. Just say: "Run a multi-agent design workshop for..."
-
-### Claude Code
-
-```bash
-# In your project directory
+# Claude Code (in project dir)
 agent-workshop init claude
-# Creates .claude/CLAUDE.md — Claude auto-loads it
-# Then say: "run a workshop for building X"
-```
+# Then: "run a workshop for building X"
 
-### Cursor
-
-```bash
-# In your project directory
+# Cursor (in project dir)
 agent-workshop init cursor
-# Creates .cursor/rules.md — Cursor loads it
-# Then say: "run a design workshop for..."
-```
-
-### Any Other Agent
-
-```bash
-agent-workshop init generic
-# Creates WORKSHOP.md — paste into agent context
-# Or keep it in repo so agent sees it while exploring files
+# Then: "run a design workshop for..."
 ```
 
 ---
 
-## Human CLI Toolkit
+## The 8 Phases
 
-The `agent-workshop` command is a **read-only inspection tool** for when you want to peek behind the curtain:
+| Phase | What Happens | Duration | Mode |
+|-------|-------------|----------|------|
+| **P1** | Frame the problem: constraints, success criteria, anti-requirements | 5–10 min | Roundtable |
+| **P2** | Extract requirements: functional, non-functional, edge cases, MoSCoW | 10–15 min | Roundtable |
+| **P3** | Debate 2–3 architectures, trade-offs, pick one | 15–20 min | Roundtable |
+| **P4** | Design system architecture: components, data flow, APIs | 20–30 min | Author + Reviewers |
+| **P5** | Design every component: interfaces, state, dependencies | 30–45 min | Author + Reviewers |
+| **P6** | Map failure modes: recovery, observability, edge cases | 15–20 min | Author + Reviewers |
+| **P7** | Build testing strategy: pyramid, CI gates, coverage | 15–20 min | Author + Reviewers |
+| **P8** | Lock the design: all roles sign off (CONSENT or DISSENT) | 10–15 min | Roundtable |
+
+**Total: ~2 hours for medium complexity.**
+
+### Agent Roles
+
+The AI adopts these roles per phase, forcing multi-perspective critique:
+
+| Role | Forces The AI To Think About | Active |
+|------|------------------------------|--------|
+| **Design Author** | Architecture, interfaces, data flow | P4-P7 |
+| **Product Critic** | User needs, scope creep, missing UX | All |
+| **Security Engineer** | Threat surfaces, auth gaps, data exposure | All |
+| **Scalability Engineer** | Bottlenecks, resource limits, SPOFs | All |
+| **QA/Testing Lead** | Testability, observability, coverage | All |
+| **Integration Specialist** | API consistency, migration paths, third-party fails | P3-P5 |
+| **DevEx Advocate** | Build/debug experience, onboarding, docs | P4-P5, P7 |
+
+---
+
+## Safety Protocol
+
+Every role response ends with a signal. No "looks good to me" without at least one concern.
+
+```
+BLOCK [section] — [specific showstopper, halt and resolve]
+CONCERN [section] — [risk, log it, keep moving]
+CONSENT [section] — [role name, explicit endorsement]
+```
+
+- **BLOCK** → Phase stops. Fix it or document why you're overriding.
+- **CONCERN** → Logged in the design doc. Doesn't block, but visible.
+- **CONSENT** → Required from every reviewer before you can say "APPROVED, next phase."
+
+---
+
+## CLI Toolkit (For Humans)
+
+`agent-workshop` is a read-only inspector. The AI does the work; you use this to peek behind the curtain.
 
 ```bash
 agent-workshop init [claude|cursor|pi|generic]   # set up agent instructions
 
-agent-workshop list                # list phases, roles, prompts
-agent-workshop manifest            # dump JSON manifest
+agent-workshop list                # phases, roles, prompts
+agent-workshop manifest            # dump JSON metadata the AI reads
 agent-workshop charter             # print workshop charter
 agent-workshop prompt p1           # render Phase 1 prompt
-agent-workshop render p4 --vars vars.json   # render with variable substitution
+agent-workshop render p4 --vars vars.json   # render with variables
 agent-workshop validate design.md  # validate final document
-agent-workshop serve 8080          # serve all resources over HTTP
+agent-workshop serve 8080          # browse all resources via HTTP
 ```
 
 ---
@@ -125,108 +190,51 @@ agent-workshop serve 8080          # serve all resources over HTTP
 
 ```
 .
-├── SKILL.md                          # Pi agent instruction manual
-├── CLAUDE.md                         # Claude Code agent instructions
-├── workshop-manifest.json            # Phase/role/prompt metadata (read by AI)
+├── SKILL.md                    # Pi instruction manual (auto-loaded)
+├── CLAUDE.md                   # Claude Code instructions
+├── workshop-manifest.json      # Phase/role/prompt metadata (the AI reads this)
 ├── bin/
-│   ├── agent-workshop                   # CLI toolkit
-│   └── agent-workshop-init              # Agent setup helper
+│   ├── agent-workshop          # Human inspection CLI
+│   └── agent-workshop-init     # Agent setup helper
 ├── docs/
-│   ├── protocol.md                   # Detailed protocol rules
-│   ├── phase-9-retrospective.md     # Post-implementation retro
-│   ├── prompts/
-│   │   ├── workshop-charter.md      # Loaded into every agent turn
+│   ├── protocol.md             # Full protocol specification
+│   ├── phase-9-retrospective.md
+│   ├── prompts/                  # Phase-specific prompt templates
+│   │   ├── workshop-charter.md
 │   │   ├── phase-1-problem-framing.md
 │   │   ├── phase-4-architecture-author.md
 │   │   ├── phase-8-consensus.md
-│   │   └── template-library.md      # P2,P3,P5,P6,P7 prompt sections
+│   │   └── template-library.md
 │   └── examples/
-│       └── todo-app-workshop.md     # Full P1-P8 transcript
+│       └── todo-app-workshop.md
 ├── scripts/
-│   └── check-readiness.sh           # Design doc validation
-├── install.sh                        # One-line global install
-├── FACILITATOR-CARD.md              # Human quick reference
-├── CHANGELOG.md
-└── README.md                         # This file
+│   └── check-readiness.sh      # Validates design docs
+├── install.sh                  # One-line global install
+├── FACILITATOR-CARD.md         # One-page quick reference
+└── README.md                   # This file
 ```
 
 ---
 
-## The 8 Phases
+## Why This Works
 
-| Phase | Name | Mode | Duration | What It Produces |
-|-------|------|------|----------|-----------------|
-| **P1** | Problem Framing | Roundtable | 5–10 min | Problem, constraints, success criteria, anti-requirements |
-| **P2** | Requirements | Roundtable | 10–15 min | MoSCoW requirements (R*, NFR*), edge cases |
-| **P3** | Approach Debate | Roundtable | 15–20 min | 2–3 architectures with trade-offs, selected approach |
-| **P4** | System Architecture | Author/Reviewers | 20–30 min | Components, data flow, APIs |
-| **P5** | Component Design | Author/Reviewers | 30–45 min | Per-component: interfaces, state, dependencies |
-| **P6** | Error Handling | Author/Reviewers | 15–20 min | Failure matrix, recovery, observability |
-| **P7** | Testing Strategy | Author/Reviewers | 15–20 min | Test pyramid, CI gates, coverage |
-| **P8** | Consensus | Roundtable | 10–15 min | Agent sign-offs (CONSENT or documented DISSENT) |
-
----
-
-## Agent Roles
-
-The AI adopts these roles per phase:
-
-| Role | Focus | Active In |
-|------|-------|-----------|
-| **Design Author** | Architecture, interfaces, data flow | P4-P7 |
-| **Product Critic** | User needs, scope creep, UX gaps | All |
-| **Security Engineer** | Threat surfaces, auth, data exposure | All |
-| **Scalability Engineer** | Bottlenecks, resource limits, SPOFs | All |
-| **QA/Testing Lead** | Testability, observability, coverage | All |
-| **Integration Specialist** | APIs, migration paths, third-party | P3-P5 |
-| **DevEx Advocate** | Build experience, onboarding, docs | P4-P5, P7 |
-
----
-
-## Safety Protocol: BLOCK / CONSENT / CONCERN
-
-Every generated agent response must end with one signal:
-
-```
-BLOCK [section] — [showstopper, halt and resolve]
-CONCERN [section] — [risk, log and continue]
-CONSENT [section] — [explicit endorsement, required from all reviewers]
-```
-
-- **BLOCK** → halt the phase, resolve or backtrack
-- **CONCERN** → non-blocking risk, logged, doesn't stop progress
-- **CONSENT** → required from every reviewer before phase gate
-- **Force critique** — "looks good" is not enough; every role must find at least one concern
-
----
-
-## Design Document Output
-
-After P8, the AI assembles:
-
-```markdown
-# Design Document — [Project]
-
-## 0. Workshop Metadata
-## 1. Problem Statement
-## 2. Requirements (functional + NFRs + edge cases)
-## 3. Selected Approach (with rejected alternatives)
-## 4. System Architecture (diagrams, data flow, APIs)
-## 5. Component Design (interfaces, state, dependencies)
-## 6. Error Handling & Edge Cases (failure matrix, recovery)
-## 7. Testing & Validation Strategy (pyramid, CI gates, coverage)
-## 8. Consensus Record (agent sign-offs or documented dissent)
-```
-
-Saved to `docs/plans/YYYY-MM-DD-<slug>-design.md`, then validated with `scripts/check-readiness.sh`.
+| Before Agent Workshop | After Agent Workshop |
+|----------------------|---------------------|
+| One AI perspective | 5-7 specialized perspectives |
+| "Looks good to me" | Every role must find at least one concern |
+| Security holes found in prod | Security Engineer blocks them in P1 |
+| Scale limits discovered at 10k users | Scalability Engineer flags them in P3 |
+| No test strategy | QA Lead defines pyramid in P7 |
+| Design doc is vague hand-waving | Standardized 9-section implementable doc |
+| You copy-paste prompts | AI reads manifest, executes automatically |
 
 ---
 
 ## Version
 
-**v1.3.0** — Cross-agent support (Pi, Claude Code, Cursor, generic), `agent-workshop init` for per-agent setup.
+**v1.3.0** — Cross-agent support (Pi, Claude Code, Cursor, generic). Auto-execution via `workshop-manifest.json` + agent-specific instruction files.
 
-See [CHANGELOG.md](CHANGELOG.md).
+See [CHANGELOG.md](CHANGELOG.md) for full history.
 
 ---
 
@@ -234,7 +242,7 @@ See [CHANGELOG.md](CHANGELOG.md).
 
 - [x] v1.1.0: Retrospective Phase (P9), Pi skill manifest
 - [ ] v1.2.0: Enhanced validator (requirement traceability, contradiction detection)
-- [x] v1.3.0: Cross-agent support (Claude, Cursor, generic), `agent-workshop init`
+- [x] v1.3.0: Cross-agent auto-execution (Claude, Cursor, generic)
 - [ ] v1.4.0: Component-level iterative refinement (P5 sub-phases)
 - [ ] v2.0.0: Save/resume workshop state across sessions
 
@@ -242,11 +250,10 @@ See [CHANGELOG.md](CHANGELOG.md).
 
 ## Contributing
 
-Contributions welcome:
-- Domain-specific prompt templates (ML, embedded, mobile)
-- Additional agent roles in the manifest
+- Domain-specific prompt templates (ML, embedded, mobile, finance)
+- Additional agent roles
 - Example workshop transcripts
-- Validator enhancements
+- Validator enhancements (contradiction detection, requirement traceability)
 
 Open an issue or PR.
 

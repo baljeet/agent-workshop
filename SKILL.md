@@ -1,8 +1,11 @@
 ---
 name: multi-agent-design-workshop
 description: >
-  Run structured multi-agent design workshops (8 phases) where YOU (the AI) play
-  multiple specialized agent roles sequentially to produce production-ready technical
+  Turn "I want to build X" into a production-ready design document.
+  Run an 8-phase structured design workshop inside the agent itself:
+  the AI adopts 5-7 specialized roles, debates trade-offs, resolves objections,
+  and gates each phase with the user before proceeding. No copy-paste.
+  Read workshop-manifest.json for phase/role/prompt metadata and execute automatically.
   design documents. You are the facilitator AND the agents. Use the workshop-manifest.json
   for phase/role metadata, docs/prompts/ for phase-specific prompts, and docs/protocol.md
   for detailed protocol rules.

@@ -1,7 +1,7 @@
 {
   "name": "multi-agent-design-workshop",
   "version": "1.3.0",
-  "description": "Facilitate structured 8-phase design discussions between multiple AI agent roles",
+  "description": "Turn 'I want to build X' into a production-ready design document. 8-phase structured design workshop where the AI adopts 5-7 specialized roles, debates trade-offs, and gates each phase with user approval.",
   "agent_instructions": "docs/protocol.md",
   "charter": "docs/prompts/workshop-charter.md",
   "phases": [
