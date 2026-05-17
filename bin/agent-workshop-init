@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 #
-# pi-workshop init — Initialize the workshop in the current project
+# agent-workshop-init — Initialize the workshop in the current project
 #
 # Detects the coding agent being used and creates the right instruction file
 # so the agent automatically knows how to run workshops.
 #
-# Usage: pi-workshop init [--agent pi|claude|cursor|codex|generic]
+# Usage: agent-workshop-init [--agent pi|claude|cursor|codex|generic]
 
 set -euo pipefail
 
@@ -65,7 +65,7 @@ When the user says anything like **"run a workshop"**, **"design a workshop for 
 Run these commands to load the workshop protocol (adjust WORKSHOP_DIR if installed elsewhere):
 
 ```bash
-WORKSHOP_DIR="${WORKSHOP_DIR:-$HOME/.pi-workshop}"
+WORKSHOP_DIR="${WORKSHOP_DIR:-$HOME/.agent-workshop}"
 cat "$WORKSHOP_DIR/workshop-manifest.json"
 cat "$WORKSHOP_DIR/docs/protocol.md"
 cat "$WORKSHOP_DIR/docs/prompts/workshop-charter.md"
@@ -165,7 +165,7 @@ If workshop files are missing, the user can install them with:
 curl -fsSL https://raw.githubusercontent.com/baljeet/pi-multi-agent-design-workshop/main/install.sh | bash
 ```
 
-The default WORKSHOP_DIR is `$HOME/.pi-workshop`.
+The default WORKSHOP_DIR is `$HOME/.agent-workshop`.
 INSTRUCTIONS
 
     success "Created $target for Claude Code"
@@ -188,7 +188,7 @@ When the user says anything like **"run a workshop"**, **"design a workshop for 
 Load workshop resources from the installed repo:
 
 ```bash
-WORKSHOP_DIR="${WORKSHOP_DIR:-$HOME/.pi-workshop}"
+WORKSHOP_DIR="${WORKSHOP_DIR:-$HOME/.agent-workshop}"
 cat "$WORKSHOP_DIR/workshop-manifest.json"
 cat "$WORKSHOP_DIR/docs/protocol.md"
 cat "$WORKSHOP_DIR/SKILL.md"
@@ -240,7 +240,7 @@ When the user says "run a workshop for X", execute this protocol.
 
 ## Setup
 ```bash
-WORKSHOP_DIR="${WORKSHOP_DIR:-$HOME/.pi-workshop}"
+WORKSHOP_DIR="${WORKSHOP_DIR:-$HOME/.agent-workshop}"
 cat "$WORKSHOP_DIR/workshop-manifest.json"  # phases, roles, prompts
 cat "$WORKSHOP_DIR/docs/protocol.md"        # rules
 cat "$WORKSHOP_DIR/SKILL.md"                # full guide

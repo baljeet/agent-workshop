@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 #
-# pi-workshop — CLI for Multi-Agent Design Workshop
+# agent-workshop — CLI for Multi-Agent Design Workshop
 # https://github.com/baljeet/pi-multi-agent-design-workshop
 #
-# Usage: pi-workshop <command> [options]
+# Usage: agent-workshop <command> [options]
 #
 
 set -euo pipefail
@@ -108,10 +108,10 @@ get_manifest() {
 
 cmd_help() {
     cat << 'EOF'
-pi-workshop — Multi-Agent Design Workshop CLI v1.3.0
+agent-workshop — Multi-Agent Design Workshop CLI v1.3.0
 
 USAGE:
-    pi-workshop <command> [options]
+    agent-workshop <command> [options]
 
 COMMANDS:
     init [agent]             Initialize workshop instructions in current project
@@ -127,16 +127,16 @@ COMMANDS:
 
 EXAMPLES:
     # Initialize for your coding agent
-    pi-workshop init                    # auto-detect agent
-    pi-workshop init claude             # Claude Code
-    pi-workshop init cursor             # Cursor
-    pi-workshop init pi                 # Pi
+    agent-workshop init                    # auto-detect agent
+    agent-workshop init claude             # Claude Code
+    agent-workshop init cursor             # Cursor
+    agent-workshop init pi                 # Pi
 
     # Then in your project, just say: "run a workshop for building X"
 
     # Human-driven render/validate
-    pi-workshop render p1 PROJECT_NAME="My App"
-    pi-workshop validate design.md
+    agent-workshop render p1 PROJECT_NAME="My App"
+    agent-workshop validate design.md
 
 PHASES (for prompt/copy):
     charter           — Workshop charter (send to all agents)
@@ -155,9 +155,9 @@ ENVIRONMENT:
     WORKSHOP_DIR     — Override repo root (default: auto-detected)
 
 RENDER SYNTAX:
-    pi-workshop render <phase> [KEY=VALUE]... [--vars file.json]
-    pi-workshop render p1 PROJECT_NAME="My App" USER_INTENT_TEXT="..."
-    pi-workshop render p4 --vars /tmp/variables.json
+    agent-workshop render <phase> [KEY=VALUE]... [--vars file.json]
+    agent-workshop render p1 PROJECT_NAME="My App" USER_INTENT_TEXT="..."
+    agent-workshop render p4 --vars /tmp/variables.json
 
     Supported variable formats:
       {{KEY}} and {{KEY_NAME}} are replaced with the provided value.
@@ -220,7 +220,7 @@ cmd_render() {
     shift || true
     
     if [[ -z "$phase" ]]; then
-        error "Phase required. Run: pi-workshop render <phase>"
+        error "Phase required. Run: agent-workshop render <phase>"
         exit 1
     fi
     
@@ -267,7 +267,7 @@ cmd_prompt() {
     local project="${2:-}"
     
     if [[ -z "$phase" ]]; then
-        error "Phase required. Run: pi-workshop prompt <phase>"
+        error "Phase required. Run: agent-workshop prompt <phase>"
         echo "   Phases: charter, p1-p8, all"
         exit 1
     fi
@@ -315,7 +315,7 @@ cmd_prompt() {
             return ;;
         *)
             error "Unknown phase: $phase"
-            echo "   Run 'pi-workshop list' to see available phases."
+            echo "   Run 'agent-workshop list' to see available phases."
             exit 1 ;;
     esac
     
@@ -333,7 +333,7 @@ cmd_copy() {
     local phase="${1:-}"
     
     if [[ -z "$phase" ]]; then
-        error "Phase required. Run: pi-workshop copy <phase>"
+        error "Phase required. Run: agent-workshop copy <phase>"
         exit 1
     fi
     
@@ -361,7 +361,7 @@ cmd_validate() {
     
     if [[ -z "$doc" ]]; then
         error "Document path required."
-        echo "   Usage: pi-workshop validate path/to/design-doc.md"
+        echo "   Usage: agent-workshop validate path/to/design-doc.md"
         exit 1
     fi
     
@@ -510,10 +510,10 @@ META
         phase "Next Steps:"
         echo ""
         echo "   1. Load the workshop charter:"
-        echo "      pi-workshop charter"
+        echo "      agent-workshop charter"
         echo ""
         echo "   2. Send Phase $p prompt to your agents:"
-        echo "      pi-workshop prompt p$p"
+        echo "      agent-workshop prompt p$p"
         echo ""
         echo "   3. After agents respond, synthesize their output."
         echo "   4. Append the P${p} artifact to $outfile"
@@ -528,7 +528,7 @@ META
     echo ""
     header "Workshop Complete!"
     success "Design document: $outfile"
-    info "Validate with: pi-workshop validate $outfile"
+    info "Validate with: agent-workshop validate $outfile"
     info "Facilitator guide: $REPO_ROOT/FACILITATOR-CARD.md"
 }
 
@@ -545,7 +545,7 @@ main() {
     
     case "$cmd" in
         init|i|setup)
-            bash "$SCRIPT_DIR/pi-workshop-init" "$@"
+            bash "$SCRIPT_DIR/agent-workshop-init" "$@"
             ;;
         start|run)
             cmd_start "$@"
@@ -578,7 +578,7 @@ main() {
             cmd_help
             ;;
         version|--version|-v)
-            echo "pi-workshop v$VERSION"
+            echo "agent-workshop v$VERSION"
             ;;
         *)
             error "Unknown command: $cmd"

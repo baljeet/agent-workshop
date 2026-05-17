@@ -29,9 +29,9 @@ curl -fsSL https://raw.githubusercontent.com/baljeet/pi-multi-agent-design-works
 ```
 
 This adds:
-- `pi-workshop` — CLI for inspecting prompts, validating documents, checking manifests
-- `pi-workshop-init` — Sets up agent-specific instruction files in your projects
-- The workshop repo at `~/.pi-workshop/`
+- `agent-workshop` — CLI for inspecting prompts, validating documents, checking manifests
+- `agent-workshop-init` — Sets up agent-specific instruction files in your projects
+- The workshop repo at `~/.agent-workshop/`
 
 ### 2. Initialize Your Project
 
@@ -39,12 +39,12 @@ In any project where you want to run workshops:
 
 ```bash
 # Auto-detect your agent and create the right instruction file
-pi-workshop init
+agent-workshop init
 
 # Or specify explicitly
-pi-workshop init claude     # → creates .claude/CLAUDE.md
-pi-workshop init cursor     # → creates .cursor/rules.md
-pi-workshop init pi         # → links to ~/.agents/skills/
+agent-workshop init claude     # → creates .claude/CLAUDE.md
+agent-workshop init cursor     # → creates .cursor/rules.md
+agent-workshop init pi         # → links to ~/.agents/skills/
 ```
 
 ### 3. Run a Workshop
@@ -62,9 +62,9 @@ Your agent reads the instructions file, loads the manifest, and executes all 8 p
 | Agent | File | Auto-Loaded? | Setup |
 |-------|------|-------------|-------|
 | **Pi** | `~/.agents/skills/pi-multi-agent-design-workshop/SKILL.md` | ✅ Yes | Clone to skills dir |
-| **Claude Code** | `.claude/CLAUDE.md` | ✅ Yes, per project | `pi-workshop init claude` |
-| **Cursor** | `.cursor/rules.md` | ✅ Yes, per project | `pi-workshop init cursor` |
-| **Generic** | `WORKSHOP.md` | ❌ Paste into context | `pi-workshop init generic` |
+| **Claude Code** | `.claude/CLAUDE.md` | ✅ Yes, per project | `agent-workshop init claude` |
+| **Cursor** | `.cursor/rules.md` | ✅ Yes, per project | `agent-workshop init cursor` |
+| **Generic** | `WORKSHOP.md` | ❌ Paste into context | `agent-workshop init generic` |
 
 ### Pi
 
@@ -79,7 +79,7 @@ Pi auto-detects `SKILL.md`. Just say: "Run a multi-agent design workshop for..."
 
 ```bash
 # In your project directory
-pi-workshop init claude
+agent-workshop init claude
 # Creates .claude/CLAUDE.md — Claude auto-loads it
 # Then say: "run a workshop for building X"
 ```
@@ -88,7 +88,7 @@ pi-workshop init claude
 
 ```bash
 # In your project directory
-pi-workshop init cursor
+agent-workshop init cursor
 # Creates .cursor/rules.md — Cursor loads it
 # Then say: "run a design workshop for..."
 ```
@@ -96,7 +96,7 @@ pi-workshop init cursor
 ### Any Other Agent
 
 ```bash
-pi-workshop init generic
+agent-workshop init generic
 # Creates WORKSHOP.md — paste into agent context
 # Or keep it in repo so agent sees it while exploring files
 ```
@@ -105,18 +105,18 @@ pi-workshop init generic
 
 ## Human CLI Toolkit
 
-The `pi-workshop` command is a **read-only inspection tool** for when you want to peek behind the curtain:
+The `agent-workshop` command is a **read-only inspection tool** for when you want to peek behind the curtain:
 
 ```bash
-pi-workshop init [claude|cursor|pi|generic]   # set up agent instructions
+agent-workshop init [claude|cursor|pi|generic]   # set up agent instructions
 
-pi-workshop list                # list phases, roles, prompts
-pi-workshop manifest            # dump JSON manifest
-pi-workshop charter             # print workshop charter
-pi-workshop prompt p1           # render Phase 1 prompt
-pi-workshop render p4 --vars vars.json   # render with variable substitution
-pi-workshop validate design.md  # validate final document
-pi-workshop serve 8080          # serve all resources over HTTP
+agent-workshop list                # list phases, roles, prompts
+agent-workshop manifest            # dump JSON manifest
+agent-workshop charter             # print workshop charter
+agent-workshop prompt p1           # render Phase 1 prompt
+agent-workshop render p4 --vars vars.json   # render with variable substitution
+agent-workshop validate design.md  # validate final document
+agent-workshop serve 8080          # serve all resources over HTTP
 ```
 
 ---
@@ -129,8 +129,8 @@ pi-workshop serve 8080          # serve all resources over HTTP
 ├── CLAUDE.md                         # Claude Code agent instructions
 ├── workshop-manifest.json            # Phase/role/prompt metadata (read by AI)
 ├── bin/
-│   ├── pi-workshop                   # CLI toolkit
-│   └── pi-workshop-init              # Agent setup helper
+│   ├── agent-workshop                   # CLI toolkit
+│   └── agent-workshop-init              # Agent setup helper
 ├── docs/
 │   ├── protocol.md                   # Detailed protocol rules
 │   ├── phase-9-retrospective.md     # Post-implementation retro
@@ -224,7 +224,7 @@ Saved to `docs/plans/YYYY-MM-DD-<slug>-design.md`, then validated with `scripts/
 
 ## Version
 
-**v1.3.0** — Cross-agent support (Pi, Claude Code, Cursor, generic), `pi-workshop init` for per-agent setup.
+**v1.3.0** — Cross-agent support (Pi, Claude Code, Cursor, generic), `agent-workshop init` for per-agent setup.
 
 See [CHANGELOG.md](CHANGELOG.md).
 
@@ -234,7 +234,7 @@ See [CHANGELOG.md](CHANGELOG.md).
 
 - [x] v1.1.0: Retrospective Phase (P9), Pi skill manifest
 - [ ] v1.2.0: Enhanced validator (requirement traceability, contradiction detection)
-- [x] v1.3.0: Cross-agent support (Claude, Cursor, generic), `pi-workshop init`
+- [x] v1.3.0: Cross-agent support (Claude, Cursor, generic), `agent-workshop init`
 - [ ] v1.4.0: Component-level iterative refinement (P5 sub-phases)
 - [ ] v2.0.0: Save/resume workshop state across sessions
 

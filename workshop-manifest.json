@@ -167,7 +167,7 @@
     ]
   },
   "tools": {
-    "cli": "bin/pi-workshop",
+    "cli": "bin/agent-workshop",
     "validate": "scripts/check-readiness.sh"
   }
 }

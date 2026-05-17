@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Variable substitution rules (`{{KEY}}` → phase context)
   - BLOCK/CONSENT/CONCERN enforcement
   - Output assembly and validation
-- **`pi-workshop` CLI** (`bin/pi-workshop`) — Inspection toolkit for humans:
+- **`agent-workshop` CLI** (`bin/agent-workshop`) — Inspection toolkit for humans:
   - `manifest` — dump JSON for programmatic use
   - `render` — render prompt with variable substitution (`KEY=VALUE` or `--vars file.json`)
   - `charter`, `prompt`, `copy`, `validate`, `list`, `serve`
